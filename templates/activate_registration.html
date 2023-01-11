@@ -1,0 +1,20 @@
+<html>
+<head>
+  <title>Activate User Registration</title>
+</head>
+
+<body>
+{% if successful %}
+Your account is now active!
+<P>Click <A href="{% url 'login' %}">here</A> to login.</P>
+{% else %}
+  {% if already_active %}
+This account has already been activated.
+<P>Click <A href="{% url 'login' %}">here</A> to login.</P>
+  {% else %}
+Activation failed, please contact support for assistance.
+  {% endif %}
+{% endif %}
+</body>
+
+</html>

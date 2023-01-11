@@ -1,0 +1,13 @@
+<HR width="75%" />
+
+<Div align="center">
+{% if not user.is_anonymous %}
+Logged in as: <U>{{user.username}}</U> |
+<A href="{% url 'change_password' %}">change password</A> |
+MFA | 
+<A href="{% url 'logout' %}">logout</A>
+<BR>
+{% endif %}
+The date/time is: <I>{% now "DATETIME_FORMAT" %} UTC</I><BR>
+Your IP address is: <B>{{request.META.HTTP_X_FORWARDED_FOR}}</B>
+</Div>

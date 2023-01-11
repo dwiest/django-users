@@ -1,0 +1,5 @@
+Thank you for registering for wiest.world!
+
+Please visit the following URL to activate your account.
+
+{{link}}

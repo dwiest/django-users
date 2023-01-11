@@ -1,0 +1,43 @@
+<html>
+<head>
+  <title>User Registration</title>
+</head>
+
+<body>
+{% if completed != True %}
+<Div align="center">
+<H1>User Registration</H1>
+<ul>
+  {% for field in form %}
+    {% for error in field.errors %}
+  <li>{{error}}
+  {% endfor %}
+{% endfor %}
+</ul>
+<form action="/django/register/" method="POST">
+{% csrf_token %}
+<table>
+  <tr>
+    <td><label for="username">Email:</label></td><td><input type="text" name="username" value="{{form.username.value}}" required></input></td>
+  </tr>
+  <tr>
+    <td><label for="password1">Password:</label></td><td><input type="password" name="password1" required></input></td>
+  </tr>
+  <tr>
+    <td><label for="password2">Confirm Password:</label></td><td><input type="password" name="password2" required></input></td>
+  </tr>
+  <tr>
+    <td colspan="2"><DIV align="center"><input type="submit"></input></DIV></td>
+  </tr>
+</table>
+</form>
+{% else %}
+<P>Thank you for registering!</P>
+<P>Please check your email for an activation link.</P>
+{% endif %}
+</Div>
+
+{% include 'footer.html' %}
+</body>
+
+</html>

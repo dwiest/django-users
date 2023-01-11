@@ -1,0 +1,3 @@
+Thank you for activating your wiest.world account.
+
+Please visit https://wiest.world{% url 'login' %} to login.
