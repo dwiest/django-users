@@ -1,5 +1,4 @@
-"""djang-users URL Configuration
-
+"""users URL Configuration
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/3.2/topics/http/urls/
 Examples:
@@ -17,13 +16,14 @@ from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth.views import LoginView, LogoutView
 from django.urls import path, include
+
 from .views import RegistrationView, ActivateRegistrationView, SendPasswordResetView, PasswordChangeView
 
 urlpatterns = [
-    path('django/register/', RegistrationView.as_view(), name='register'),
-    path('django/activate', ActivateRegistrationView.as_view(), name='activate'),
-    path('django/login/', LoginView.as_view(), name='login'),
-    path('django/logout/', LogoutView.as_view(), {'next_page': settings.LOGOUT_REDIRECT_URL, 'name': 'logout'}, name='logout'),
-    path('django/resetPassword/', SendPasswordResetView.as_view(), name='reset_password'),
-    path('django/changePassword/', PasswordChangeView.as_view(), name='change_password'),
+    path('register/', RegistrationView.as_view(), name='register'),
+    path('activate', ActivateRegistrationView.as_view(), name='activate'),
+    path('login/', LoginView.as_view(), name='login'),
+    path('logout/', LogoutView.as_view(), {'next_page': settings.LOGOUT_REDIRECT_URL, 'name': 'logout'}, name='logout'),
+    path('resetPassword/', SendPasswordResetView.as_view(), name='reset_password'),
+    path('changePassword/', PasswordChangeView.as_view(), name='change_password'),
 ]
