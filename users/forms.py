@@ -2,7 +2,7 @@ from django.conf import settings
 from django.contrib.auth.forms import UserCreationForm, SetPasswordForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
-from django forms import Form
+from django import forms
 from django.utils.translation import ugettext, ugettext_lazy as _
 import uuid
 from .models import ActivationId
@@ -31,7 +31,7 @@ class RegistrationForm(UserCreationForm):
       send_email(settings.EMAIL_SENDER, recipients, email_message.as_string(), settings.SMTP_SERVER, smtp_server_login=settings.EMAIL_SENDER, smtp_server_password=settings.SMTP_SERVER_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
 
 
-class SendPasswordResetForm(Form):
+class SendPasswordResetForm(forms.Form):
   email = forms.EmailField(label='email',initial='',max_length=50)
 
   def sendPasswordResetEmail(self):
