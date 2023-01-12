@@ -1,5 +1,4 @@
 include LICENSE
 include Readme.rst
 recursive-include docs *
-recursive-include users/celery *
-recursive-include users/templates *
+recursive-include dwiest *
