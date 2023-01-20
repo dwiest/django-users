@@ -16,7 +16,7 @@ from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth.views import LoginView, LogoutView
 from django.urls import path, include
-
+import dwiest.django.users.mfa
 from .views import RegistrationView, ActivateRegistrationView, SendPasswordResetView, PasswordChangeView
 
 urlpatterns = [
@@ -26,4 +26,5 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(), {'next_page': settings.LOGOUT_REDIRECT_URL, 'name': 'logout'}, name='logout'),
     path('resetPassword/', SendPasswordResetView.as_view(), name='reset_password'),
     path('changePassword/', PasswordChangeView.as_view(), name='change_password'),
+    path('mfa/', include('dwiest.django.users.mfa.urls')),
 ]
