@@ -1,0 +1,88 @@
+<Html>
+<Head>
+  <Title>{{page_name}}</Title>
+  <Style>
+.container {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  width: 100%;
+  }
+.error-text{
+  color: #ffffff;
+  background-color: #ff0000
+  }
+  </Style>
+</Head>
+
+<Body>
+{% block header %}
+{% with title=page_name %}
+{% include 'header.html' %}
+{% endwith %}
+{% endblock %}
+
+<Div align="center">
+{% if form.secret_key_image %}
+<P>
+<Img src="data:image/png;base64,{{form.secret_key_image}}"/>
+</P>
+{% endif %}
+
+<P>
+Secret Key: {{form.secret_key.value}}
+</P>
+
+<P>
+Scan the above QR code using your authenticator application.
+If you prefer, you may also manually enter the secret key shown.
+</P>
+
+<P>
+Enter the code from your authenticator app in the field below and press the button to enable MFA for your account.
+</P>
+
+<Form method="POST" action="{% url 'mfa_enable' %}">
+{% csrf_token %}
+{{form.secret_key}}
+{{form.token}} <Input type="submit" value="Enable MFA"/>
+</Form>
+
+{% if form.non_field_errors %}
+<P>
+  {% for item in form.non_field_errors %}
+    <Div class="error-text">{{item}}</Div><Br>
+  {% endfor %}
+</P>
+{% endif %}
+
+<P>
+If you don't have an authenticator app or browser plug-in you can install one from the links below.
+</P>
+<P>
+Authenticators for Android based devices:</Br>
+<A href="https://play.google.com/store/apps/details?id=com.authy.authy">Twilio Authy Authenticator</A><Br/>
+<A href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2">Google Authenticator</A><Br/>
+<A href="https://play.google.com/store/apps/details?id=com.azure.authenticator">Microsoft Authenticator</A>
+</P>
+
+<P>
+Authenticators for iPhone devices:</Br>
+<A href="https://apps.apple.com/us/app/authenticator-app/id1538761576">Authenticator App</A><Br/>
+<A href="https://apps.apple.com/us/app/microsoft-authenticator/id983156458">Microsoft Authenticator</A><Br/>
+<A href="https://apps.apple.com/us/app/google-authenticator/id388497605">Google Authenticator</A>
+</P>
+
+<P>
+Chrome based browser plugin:
+<A href="https://chrome.google.com/webstore/detail/authenticator/bhghoamapcdpbohphigoooaddinpkbai">Authenticator</A>
+</P>
+
+<P>Microsoft Edge plugin:
+<A href="https://microsoftedge.microsoft.com/addons/detail/authenticator-2fa-client/ocglkepbibnalbgmbachknglpdipeoio">Authenticator: 2FA Client</A>
+</P>
+
+{% include 'footer.html' %}
+</body>
+
+</html>

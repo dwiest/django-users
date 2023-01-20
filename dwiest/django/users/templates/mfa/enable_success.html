@@ -1,0 +1,35 @@
+<Html>
+<Head>
+  <Title>Multi-Factor Authentication Enabled</Title>
+  <Style>
+.container {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  width: 100%;
+  }
+  </Style>
+</Head>
+
+<Body>
+{% block header %}
+{% with title='Multi-Factor Authentication Enabled'%}
+{% include 'header.html' %}
+{% endwith %}
+{% endblock %}
+
+<Div align="center">
+<H2>Success!</H2>
+<P>
+Multi-factor authentication was successfully enabled for your account.<Br>
+You will need to enter the value from your authenticator app when logging in.
+</P>
+<P>
+If you would like to disable multi-factor authentiction, you may do so <A href="{% url 'mfa_disable' %}">here</A>.
+</P>
+</Div>
+
+{% include 'footer.html' %}
+</body>
+
+</html>

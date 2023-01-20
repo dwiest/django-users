@@ -1,0 +1,34 @@
+<html>
+<head>
+  <title>Multi-Factor Authentication</title>
+</head>
+
+<body>
+{% block header %}
+{% with title=page_name %}
+{% include 'header.html' %}
+{% endwith %}
+{% endblock %}
+
+<Div align="center">
+<H1>Multi-Factor Authentication</H1>
+
+<P>
+</P>
+Multi-factor authentication is currently disabled for your account.
+<P>
+Click <A href="{%url 'mfa_enable'%}">here</A> to enable it.
+</P>
+
+<P>
+Multi-factor authentication is currently enabled for your account.
+</P>
+<P>
+Click <A href="{%url 'mfa_disable'%}">here</A> if you would like to disable it.
+</P>
+</Div>
+
+{% include 'footer.html' %}
+</body>
+
+</html>
