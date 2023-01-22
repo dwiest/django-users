@@ -1,0 +1,51 @@
+<Html>
+<Head>
+  <Title>{{page_name}}</Title>
+  <Style>
+.container {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  width: 100%;
+  }
+.error-text{
+  color: #ffffff;
+  background-color: #ff0000
+  }
+  </Style>
+</Head>
+
+<Body>
+{% block header %}
+{% with title=page_name %}
+{% include 'header.html' %}
+{% endwith %}
+{% endblock %}
+
+<Div align="center">
+<P>
+To disable multi-factor authentication for your account please type the text shown below and press the 'Disable MFA' button.
+</P>
+<P>
+<H2>{{form.confirm_message}}</H2>
+</P>
+
+<Form method="POST" action="{% url 'mfa_disable' %}">
+{% csrf_token %}
+{{form.disable_mfa}}
+<Input type="submit" value="Disable MFA"/>
+</Form>
+
+{% if form.non_field_errors %}
+<P>
+  {% for item in form.non_field_errors %}
+    <Div class="error-text">{{item}}</Div><Br>
+  {% endfor %}
+</P>
+{% endif %}
+</Div>
+
+{% include 'footer.html' %}
+</body>
+
+</html>
