@@ -6,6 +6,15 @@ from io import BytesIO
 import pyotp
 import qrcode
 
+# copied from https://stackoverflow.com/questions/43425116/clear-all-form-fields-on-validation-error-in-django
+class NonstickyTextInput(forms.TextInput):
+    '''Custom text input widget that's "non-sticky"
+    (i.e. does not remember submitted values).
+    '''
+    def get_context(self, name, value, attrs):
+        value = None  # Clear the submitted value.
+        return super().get_context(name, value, attrs)
+
 class MfaEnableForm(forms.Form):
   token = forms.CharField(
     label='Token',
@@ -13,7 +22,7 @@ class MfaEnableForm(forms.Form):
     max_length='6',
     min_length='6',
     required=True,
-    widget=forms.TextInput(attrs={'size': '6'}))
+    widget=NonstickyTextInput(attrs={'size': '6'}))
 
   secret_key = forms.CharField(
     initial='',
@@ -42,14 +51,14 @@ class MfaEnableForm(forms.Form):
     self.secret_key_image = get_qrcode(self.provisioning_uri)
 
   def clean(self):
-    super().clean()
     if hasattr(settings, 'MFA_ACCEPT_ANY_VALUE') and settings.MFA_ACCEPT_ANY_VALUE:
       print("!WARNING! MFA accepting any value")
-      return True
+      return super().clean()
     elif self.cleaned_data.get('token') == self.totp.now():
-      return True
+      return super().clean()
     else:
       raise ValidationError('Invalid token, please try again')
+    
 
 def get_qrcode(text):
   qr = qrcode.QRCode(
@@ -68,4 +77,14 @@ def get_qrcode(text):
 
 
 class MfaDisableForm(forms.Form):
-  pass
+  confirm_message = 'I want to make my account less secure'
+
+  disable_mfa = forms.CharField(
+    label='Disable MFA',
+    initial='',
+    required=True,
+    widget=forms.TextInput(attrs={'size': len(confirm_message)}))
+
+  def clean(self):
+    if self.cleaned_data.get('disable_mfa') != self.confirm_message:
+      raise ValidationError('Please type the confirmation text.', code='confirm')
