@@ -1,6 +1,6 @@
 <html>
 <head>
-  <title>Multi-Factor Authentication</title>
+  <title>{{page_name}}</title>
 </head>
 
 <body>
@@ -11,21 +11,21 @@
 {% endblock %}
 
 <Div align="center">
-<H1>Multi-Factor Authentication</H1>
-
-<P>
-</P>
-Multi-factor authentication is currently disabled for your account.
-<P>
-Click <A href="{%url 'mfa_enable'%}">here</A> to enable it.
-</P>
-
+{% if user_has_mfa %}
+<H2>Multi-Factor is Enabled</H2>
 <P>
 Multi-factor authentication is currently enabled for your account.
 </P>
 <P>
 Click <A href="{%url 'mfa_disable'%}">here</A> if you would like to disable it.
 </P>
+{% else %}
+<H2>Multi-Factor is Disabled</H2>
+Multi-factor authentication is currently disabled for your account.
+<P>
+Click <A href="{%url 'mfa_enable'%}">here</A> to enable it.
+</P>
+{% endif %}
 </Div>
 
 {% include 'footer.html' %}
