@@ -1,13 +1,17 @@
 from django.conf import settings
 from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
+from django.http import HttpResponseRedirect
 from django.shortcuts import render
+from django.urls import reverse
 from django.views.generic import FormView, TemplateView
 from .email import generate_account_activation_email, send_email
 from .forms import RegistrationForm, SendPasswordResetForm, PasswordChangeForm
 from .models import ActivationId
 
+status_page = 'home'
 
 class RegistrationView(FormView):
   template_name = "user_registration.html"
@@ -63,8 +67,21 @@ class SendPasswordResetView(TemplateView):
       return render(request, self.template_name, {'form': form, 'completed': False})
 
 
-class PasswordChangeView(TemplateView):
+class PasswordChangeView(LoginRequiredMixin, TemplateView):
+  form_class = PasswordChangeForm
+  page_name = 'Change Password'
   template_name = "password_change.html"
+#  success_page = 'mfa_enable_success'
+
+  def __init__(self, *args, **kwargs):
+    self.response_dict = {
+      'page_name': self.page_name,
+    }
+
+  def get(self, request, *args, **kwargs):
+    form = self.form_class(request.user)
+    self.response_dict['form'] = form
+    return render(request, self.template_name, self.response_dict)
 
   def post(self, request, *args, **kwargs):
     form = PasswordChangeForm(request.user, data=request.POST)
@@ -73,6 +90,18 @@ class PasswordChangeView(TemplateView):
       form.save()
       # prevent the user from being logged out after a password change
       update_session_auth_hash(request, request.user)
-      return render(request, self.template_name, {'form': form, 'completed': True})
+      request.session['password_changed'] = True
+      return HttpResponseRedirect(reverse('change_password_success'))
     else:
       return render(request, self.template_name, {'form': form, 'completed': False})
+
+class PasswordChangeSuccessView(TemplateView):
+  page_name = 'Password Changed'
+  template_name = 'password_change_success.html'
+
+  def get(self, request, *args, **kwargs):
+    if 'password_changed' in request.session:
+      request.session.pop('password_changed')
+      return render(request, self.template_name)
+    else:
+      return HttpResponseRedirect(reverse(status_page))
