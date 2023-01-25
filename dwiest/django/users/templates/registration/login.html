@@ -15,12 +15,19 @@
 <Form action="{{form.template_url}}" method="POST">
 {% csrf_token %}
 <Table>
+  <Tr>
+    <Td>Email:</Td>
+    <Td>{{form.username}}</Td>
+  </Tr>
+  <Tr>
+    <Td>{{form.password.label}}:</Td>
+    <Td>{{form.password}}</Td>
+  </Tr>
+  <Tr>
+    <Td>{{form.mfa_token.label}}:</Td>
+    <Td>{{form.mfa_token}}</Td>
+  </Tr>
   <TR>
-    <TD><Label for="username">Email:</Label></TD><TD><Input type="text" name="username" value="{{form.username.value|default:''}}" required></Input></TD>
-  </TR>
-  <TR>
-    <TD><Label for="password">Password:</Label></TD><TD><Input type="password" name="password" required></Input></TD>
-  </TR>
   <TR>
     <TD colspan="2"><DIV align="center"><Input type="submit" value="Login"></Input></DIV></TD>
   </TR>
