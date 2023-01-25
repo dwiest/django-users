@@ -1,14 +1,15 @@
 from django.conf import settings
 from django.contrib.auth.forms import UserCreationForm, SetPasswordForm
 from django.contrib.auth.models import User
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django import forms
+from django.contrib.auth import forms as authForms
 from django.utils.translation import ugettext, ugettext_lazy as _
 import uuid
 from .models import ActivationId
 from .email import generate_password_change_email, generate_password_reset_email, generate_registration_email, send_email
-
-
+from dwiest.django.users.mfa import MfaModel, NonstickyTextInput
+import pyotp
 
 class RegistrationForm(UserCreationForm):
   username = forms.EmailField(label='Email',initial='',max_length=50)
@@ -54,19 +55,78 @@ class SendPasswordResetForm(forms.Form):
       send_email(settings.EMAIL_SENDER, recipients, email_message.as_string(), settings.SMTP_SERVER, smtp_server_login=settings.EMAIL_SENDER, smtp_server_password=settings.SMTP_SERVER_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
 
 
-class PasswordChangeForm(SetPasswordForm):
+class PasswordChangeForm(authForms.PasswordChangeForm):
+  mfa_token = forms.CharField(
+    label=_("MFA Token"),
+    max_length=6,
+    min_length=6,
+    required=False,
+    widget=NonstickyTextInput(attrs={'size': 6}))
 
-  error_messages = {
-    'password_mismatch': _("The two password fields didn't match."),
-    'update_failed': _("Your password could not be updated."),
-    'invalid_user': _("Your password could not be updated."),
-  }
+  authForms.PasswordChangeForm.base_fields['old_password'].label = 'Password'
+  authForms.PasswordChangeForm.base_fields['new_password1'].label = 'New Password'
+  authForms.PasswordChangeForm.base_fields['new_password2'].label = 'Confirm Password'
+
+  authForms.PasswordChangeForm.error_messages.update({
+    'password_mismatch':
+      _("The two password fields didn't match."),
+    'update_failed':
+      _("Your password could not be updated."),
+    'invalid_user':
+      _("Your password could not be updated."),
+    'invalid_mfa_token': _(
+      "The MFA token you entered is not correct."
+    ),
+    'replayed_mfa_token': _(
+      "The MFA token you entered has already been used.  Please wait and enter the next value shown in your authenticator app."
+    ),
+  })
 
   activation_id = forms.CharField(label='activation_id',initial='',required=False, max_length=36)
 
-  def __init__(self, user, *args, **kwargs):
-    self.user = user
-    super(SetPasswordForm, self).__init__(*args, **kwargs)
+#  def __init__(self, user, *args, **kwargs):
+#    self.user = user
+#    super(SetPasswordForm, self).__init__(*args, **kwargs)
+
+  def clean_mfa_token(self):
+    mfa_token = self.cleaned_data.get('mfa_token')
+
+    if hasattr(settings, 'MFA_ACCEPT_ANY_VALUE') and settings.MFA_ACCEPT_ANY_VALUE:
+      print("!WARNING! MFA accepting any value")
+      mfa_token = None
+
+    if mfa_token != None:
+      try:
+        user_mfa = MfaModel.objects.get(user_id=self.user.id)
+        totp = pyotp.TOTP(user_mfa.secret_key)
+
+        if mfa_token != totp.now():
+          print("invalid_mfa_token")
+          raise self.get_invalid_mfa_token_error()
+        elif mfa_token == user_mfa.last_value:
+          print("replayed_mfa_token")
+          raise self.get_replayed_mfa_token_error()
+        else:
+          print("valid_mfa_token")
+          user_mfa.last_value = mfa_token
+          user_mfa.save()
+
+      except ObjectDoesNotExist:
+          print("No MFA object for user")
+          raise self.get_invalid_mfa_token_error()
+    return mfa_token
+
+  def get_invalid_mfa_token_error(self):
+    return ValidationError(
+      self.error_messages['invalid_mfa_token'],
+      code='invalid_mfa_token',
+    )
+
+  def get_replayed_mfa_token_error(self):
+    return ValidationError(
+      self.error_messages['replayed_mfa_token'],
+      code='replayed_mfa_token',
+    )
 
   def clean_activation_id(self):
     activation_id = self.cleaned_data.get("activation_id")
@@ -88,7 +148,7 @@ class PasswordChangeForm(SetPasswordForm):
   def _sendPasswordChangeEmail(self):
     email = self.user.email
     try:
-      user = User.objects.get(username=email, is_active=True)
+      User.objects.get(username=email, is_active=True)
     except ObjectDoesNotExist:
       # Silently ignore an unknown email address or inactive user
       return
