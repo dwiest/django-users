@@ -1,3 +1,4 @@
+from django.contrib.auth.signals import user_logged_in
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
@@ -8,7 +9,34 @@ from django.views.generic.base import TemplateResponseMixin
 from .forms import MfaEnableForm, MfaDisableForm
 from .models import MfaModel
 
+def check_user_mfa(sender, user, request, **kwargs):
+  print("checking if MFA is enabled for the user")
+  try:
+    mfa_record = MfaModel.objects.get(user_id=request.user.id)
+    if mfa_record:
+       print("MFA enabled")
+       request.session['user_has_mfa'] = True
+  except ObjectDoesNotExist:
+    print("MFA not enabled")
+
+user_logged_in.connect(check_user_mfa)
+
 status_page = 'mfa_status'
+
+class MfaStatusView(FormView, TemplateResponseMixin):
+  page_name = 'Multi-Factor Authentication'
+  template_name = 'mfa/index.html'
+
+  def __init__(self, *args, **kwargs):
+    self.response_dict = {
+      'page_name': self.page_name,
+    }
+
+  def get(self, request, *args, **kwargs):
+    if request.session.get('user_has_mfa'):
+      print("MFA enabled")
+      self.response_dict['user_has_mfa'] = True
+    return render(request, self.template_name, self.response_dict)
 
 class MfaEnableView(FormView, TemplateResponseMixin):
   form_class = MfaEnableForm
@@ -46,8 +74,8 @@ class MfaEnableView(FormView, TemplateResponseMixin):
     form = self.form_class(data=request.POST)
     self.response_dict['form'] = form
     if form.is_valid():
-      #return render(request, self.success_url, self.response_dict)
       request.session['mfa_enabled'] = True
+      request.session['user_has_mfa'] = True
       # create and store an MFA model object
       secret_key = form.cleaned_data['secret_key']
       user_id = request.user.id
@@ -105,7 +133,7 @@ class MfaDisableView(FormView, TemplateResponseMixin):
       print("Deleting MFA record")
       mfa_record.delete()
       request.session['mfa_disabled'] = True
-      #return render(request, self.template_name, self.response_dict)
+      request.session['user_has_mfa'] = False
       return HttpResponseRedirect(reverse(self.success_page))
     else:
       return render(request, self.template_name, self.response_dict)
