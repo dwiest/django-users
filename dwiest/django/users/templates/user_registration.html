@@ -1,16 +1,16 @@
 <html>
 <head>
   <title>User Registration</title>
+{% include 'css.html' %}
 </head>
 
-<body>
+<Body>
 {% if completed != True %}
 <Div align="center">
 <H1>User Registration</H1>
-<ul>
-  {% for field in form %}
-    {% for error in field.errors %}
-  <li>{{error}}
+{% for field in form %}
+  {% for error in field.errors %}
+  <Div class="error-text">{{error}}</Div>
   {% endfor %}
 {% endfor %}
 </ul>
