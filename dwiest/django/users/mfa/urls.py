@@ -17,7 +17,7 @@ from django.views.generic import TemplateView
 from . import views
 
 urlpatterns = [
-  path('', TemplateView.as_view(template_name='mfa/index.html'), name='mfa_status'),
+  path('', views.MfaStatusView.as_view(), name='mfa_status'),
   path('enable/', views.MfaEnableView.as_view(), name='mfa_enable'),
   path('enable/success/', views.MfaEnableSuccessView.as_view(), name='mfa_enable_success'),
   path('disable/', views.MfaDisableView.as_view(), name='mfa_disable'),
