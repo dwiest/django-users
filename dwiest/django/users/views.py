@@ -8,7 +8,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.views.generic import FormView, TemplateView
 from .email import generate_account_activation_email, send_email
-from .forms import RegistrationForm, SendPasswordResetForm, PasswordChangeForm
+from .forms import *
 from .models import ActivationId
 
 status_page = 'home'
@@ -31,7 +31,7 @@ class ActivateRegistrationView(TemplateView):
   template_name = "activate_registration.html"
 
   def get(self, request, *args, **kwargs):
-    activation_id = request.GET['id']
+    activation_id = request.GET.get('activation_id')
 
     try:
       record = ActivationId.objects.get(value=activation_id)
@@ -55,23 +55,10 @@ class ActivateRegistrationView(TemplateView):
 
 
 class SendPasswordResetView(TemplateView):
-  template_name = "send_password_reset.html"
-
-  def post(self, request, *args, **kwargs):
-    form = SendPasswordResetForm(request.POST)
-
-    if form.is_valid():
-      form.sendPasswordResetEmail()
-      return render(request, self.template_name, {'form': form, 'completed': True})
-    else:
-      return render(request, self.template_name, {'form': form, 'completed': False})
-
-
-class PasswordChangeView(LoginRequiredMixin, TemplateView):
-  form_class = PasswordChangeForm
-  page_name = 'Change Password'
-  template_name = "password_change.html"
-#  success_page = 'mfa_enable_success'
+  page_name = 'Password Reset'
+  template_name = 'send_password_reset.html'
+  success_page = 'password_reset_success'
+  form_class = SendPasswordResetForm
 
   def __init__(self, *args, **kwargs):
     self.response_dict = {
@@ -79,12 +66,139 @@ class PasswordChangeView(LoginRequiredMixin, TemplateView):
     }
 
   def get(self, request, *args, **kwargs):
-    form = self.form_class(request.user)
+    form = self.form_class()
     self.response_dict['form'] = form
     return render(request, self.template_name, self.response_dict)
 
   def post(self, request, *args, **kwargs):
+    form = self.form_class(data=request.POST)
+    self.response_dict['form'] = form
+
+    if form.is_valid():
+      form.sendPasswordResetEmail()
+      request.session['password_reset'] = True
+      return HttpResponseRedirect(reverse(self.success_page))
+    else:
+      return render(request, self.template_name, self.response_dict)
+
+
+class SendPasswordResetSuccessView(TemplateView):
+  page_name = 'Password Reset Email Sent'
+  template_name = 'send_password_reset_success.html'
+
+  def __init__(self, *args, **kwargs):
+    self.response_dict = {
+      'page_name': self.page_name,
+    }
+
+  def get(self, request, *args, **kwargs):
+    if 'password_reset' in request.session:
+      request.session.pop('password_reset')
+      return render(request, self.template_name, self.response_dict)
+    else:
+      return HttpResponseRedirect(reverse('login'))
+
+
+class PasswordResetConfirmView(TemplateView):
+  page_name = 'Password Reset'
+  template_name = 'password_reset_confirm.html'
+  success_page = 'password_reset_confirm_success'
+  fail_page = 'password_reset_failed'
+  form_class = PasswordResetConfirmForm
+
+  def __init__(self, *args, **kwargs):
+    self.response_dict = {
+      'page_name': self.page_name,
+    }
+
+  def get(self, request, *args, **kwargs):
+    activation_id = request.GET.get('activation_id')
+
+    if activation_id_is_valid(activation_id) == False:
+      request.session['password_reset_failed'] = True
+      return HttpResponseRedirect(reverse(self.fail_page))
+
+    else:
+      form = self.form_class(None)
+      self.response_dict['form'] = form
+      form.fields['activation_id'].initial = activation_id
+      return render(request, self.template_name, self.response_dict)
+
+  def post(self, request, *args, **kwargs):
+    form = self.form_class(None, data=request.POST)
+    self.response_dict['form'] = form
+
+    if form.is_valid():
+      form.save()
+      # prevent the user from being logged out after a password change
+      update_session_auth_hash(request, request.user)
+      request.session['password_reset_confirm'] = True
+      try:
+        record = ActivationId.objects.get(value=form.cleaned_data['activation_id'])
+        user = User.objects.get(id=record.user_id)
+        recipients = [user.email]
+        email_message = generate_password_change_email(recipients)
+        send_email(settings.EMAIL_SENDER, recipients, email_message.as_string(), settings.SMTP_SERVER, smtp_server_login=settings.EMAIL_SENDER, smtp_server_password=settings.SMTP_SERVER_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
+
+      except ObjectDoesNotExist:
+        print("Couldn't send password reset email.  This shouldn't have happened!")
+
+      return HttpResponseRedirect(reverse(self.success_page))
+    else:
+      return render(request, self.template_name, self.response_dict)
+
+
+class PasswordResetConfirmSuccessView(TemplateView):
+  page_name = 'Password Changed'
+  template_name = 'password_reset_confirm_success.html'
+
+  def __init__(self, *args, **kwargs):
+    self.response_dict = {
+      'page_name': self.page_name,
+    }
+
+  def get(self, request, *args, **kwargs):
+    if 'password_reset_confirm' in request.session:
+      request.session.pop('password_reset_confirm')
+      return render(request, self.template_name, self.response_dict)
+    else:
+      return HttpResponseRedirect(reverse(status_page))
+
+
+class PasswordResetFailedView(TemplateView):
+  page_name = 'Password Reset Failed'
+  template_name = 'password_reset_failed.html'
+
+  def __init__(self, *args, **kwargs):
+    self.response_dict = {
+      'page_name': self.page_name,
+    }
+
+  def get(self, request, *args, **kwargs):
+    if 'password_reset_failed' in request.session:
+      request.session.pop('password_reset_failed')
+      return render(request, self.template_name, self.response_dict)
+    else:
+      return HttpResponseRedirect(reverse(status_page))
+
+
+class PasswordChangeView(LoginRequiredMixin, TemplateView):
+  form_class = PasswordChangeForm
+  page_name = 'Change Password'
+  template_name = "password_change.html"
+
+  def __init__(self, *args, **kwargs):
+    self.response_dict = {
+      'page_name': self.page_name,
+    }
+
+  def get(self, request, *args, **kwargs):
+    self.response_dict['form'] = self.form_class(request.user)
+    return render(request, self.template_name, self.response_dict)
+
+  def post(self, request, *args, **kwargs):
     form = PasswordChangeForm(request.user, data=request.POST)
+    self.response_dict['form'] = form
 
     if form.is_valid():
       form.save()
@@ -93,15 +207,21 @@ class PasswordChangeView(LoginRequiredMixin, TemplateView):
       request.session['password_changed'] = True
       return HttpResponseRedirect(reverse('change_password_success'))
     else:
-      return render(request, self.template_name, {'form': form, 'completed': False})
+      return render(request, self.template_name, self.response_dict)
+
 
 class PasswordChangeSuccessView(TemplateView):
   page_name = 'Password Changed'
   template_name = 'password_change_success.html'
 
+  def __init__(self, *args, **kwargs):
+    self.response_dict = {
+      'page_name': self.page_name,
+    }
+
   def get(self, request, *args, **kwargs):
     if 'password_changed' in request.session:
       request.session.pop('password_changed')
-      return render(request, self.template_name)
+      return render(request, self.template_name, self.response_dict)
     else:
       return HttpResponseRedirect(reverse(status_page))
