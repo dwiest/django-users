@@ -1,14 +1,15 @@
 <Html>
 <Head>
   <Title>Login</Title>
+{% include 'css.html' %}
 </Head>
 
 <Body>
 <Div align="center"><H1>Login</H1>
 
 {% for error in form.non_field_errors %}
-<P>{{error}}</P>
-<P>If you have forgotten your password, please click <A href="{% url 'reset_password' %}">here</A>
+<Div class="error-text">{{error}}</Div>
+<P>If you have forgotten your password, please click <A href="{% url 'password_reset' %}">here</A>.
 {% endfor %}
 
 <P>
