@@ -43,7 +43,7 @@ def generate_account_activation_email(recipients):
 def generate_password_reset_email(recipients, activation_id):
   subject = settings.PASSWORD_RESET_EMAIL_SUBJECT
   sender = settings.EMAIL_SENDER
-  link = "https://wiest.world/django/changePassword?id={}".format(activation_id)
+  link = "https://wiest.world/django/password/reset/confirm?activation_id={}".format(activation_id)
   html_template = get_template(settings.PASSWORD_RESET_EMAIL_HTML)
   text_template = get_template(settings.PASSWORD_RESET_EMAIL_TEXT)
   html_body = html_template.render({'link':link})
