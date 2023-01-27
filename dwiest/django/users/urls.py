@@ -18,15 +18,55 @@ from django.contrib.auth.views import LogoutView
 from django.urls import path, include
 import dwiest.django.users.mfa
 from dwiest.django.auth.views import LoginView, PasswordChangeView
-from .views import RegistrationView, ActivateRegistrationView, SendPasswordResetView, PasswordChangeSuccessView
+from .views import *
 
 urlpatterns = [
-    path('register/', RegistrationView.as_view(), name='register'),
-    path('activate', ActivateRegistrationView.as_view(), name='activate'),
-    path('login/', LoginView.as_view(), name='login'),
-    path('logout/', LogoutView.as_view(), {'next_page': settings.LOGOUT_REDIRECT_URL, 'name': 'logout'}, name='logout'),
-    path('resetPassword/', SendPasswordResetView.as_view(), name='reset_password'),
-    path('changePassword/', PasswordChangeView.as_view(), name='change_password'),
-    path('changePassword/success/', PasswordChangeSuccessView.as_view(), name='change_password_success'),
-    path('mfa/', include('dwiest.django.users.mfa.urls')),
+  path('activate',
+    ActivateRegistrationView.as_view(),
+    name='activate'
+    ),
+  path('login/',
+    LoginView.as_view(),
+    name='login'
+    ),
+  path('logout/',
+    LogoutView.as_view(),
+    {'next_page': settings.LOGOUT_REDIRECT_URL, 'name': 'logout'},
+    name='logout'
+    ),
+  path('mfa/',
+    include('dwiest.django.users.mfa.urls')
+    ),
+  path('password/reset/',
+    SendPasswordResetView.as_view(),
+    name='password_reset'
+    ),
+  path('password/reset/confirm/',
+    PasswordResetConfirmView.as_view(),
+    name='password_reset_confirm'
+    ),
+  path('password/reset/confirm/success/',
+    PasswordResetConfirmSuccessView.as_view(),
+    name='password_reset_confirm_success'
+    ),
+  path('password/reset/success/',
+    SendPasswordResetSuccessView.as_view(),
+    name='password_reset_success'
+    ),
+  path('password/reset/failed/',
+    PasswordResetFailedView.as_view(),
+    name='password_reset_failed'
+    ),
+  path('password/change/',
+    PasswordChangeView.as_view(),
+    name='change_password'
+    ),
+  path('password/change/success/',
+    PasswordChangeSuccessView.as_view(),
+    name='change_password_success'
+    ),
+  path('register/',
+    RegistrationView.as_view(),
+    name='register'
+    ),
 ]
