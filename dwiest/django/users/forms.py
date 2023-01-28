@@ -239,7 +239,7 @@ class PasswordChangeForm(authForms.PasswordChangeForm):
     )
 
   def save(self, commit=True):
-    if settings.SEND_EMAIL:
+    if hasattr(settings, 'SEND_EMAIL') and settings.SEND_EMAIL:
       self._sendPasswordChangeEmail()
     super().save(commit)
 
