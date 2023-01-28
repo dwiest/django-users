@@ -1,3 +1,4 @@
+import datetime
 from django.conf import settings
 from django.contrib.auth.forms import UserCreationForm, SetPasswordForm
 from django.contrib.auth.models import User
@@ -10,6 +11,7 @@ from .models import ActivationId
 from .email import generate_password_change_email, generate_password_reset_email, generate_registration_email, send_email
 from dwiest.django.users.mfa import MfaModel, NonstickyTextInput
 import pyotp
+import pytz
 
 class RegistrationForm(UserCreationForm):
   username = forms.EmailField(label='Email',initial='',max_length=50)
@@ -60,7 +62,7 @@ class PasswordResetConfirmForm(authForms.PasswordChangeForm):
 
   activation_id = forms.CharField(
     label=_('Activation Id'),
-    required=False,
+    required=True,
     widget=forms.HiddenInput(),
     )
 
@@ -85,29 +87,32 @@ class PasswordResetConfirmForm(authForms.PasswordChangeForm):
     'replayed_mfa_token': _(
       "The MFA token you entered has already been used.  Please wait and enter the next value shown in your authenticator app."
     ),
+    'activation_id_expired': _(
+      "The activation id has expired.  Please request a new pasword reset email."
+    ),
     'activation_id_invalid': _(
       "The activation id is invalid."
-    ),
-    'activation_id_missing': _(
-      "An activation id was not provided."
     ),
   })
 
   def clean_activation_id(self):
-    activation_id = self.cleaned_data.get("activation_id")
-    if activation_id and activation_id != '':
-      try:
-        user_activation_id = ActivationId.objects.get(value=activation_id)
-        self.user = User.objects.get(id=user_activation_id.user_id, is_active=True)
-      except ObjectDoesNotExist:
-        raise forms.ValidationError(
-          self.error_messages['activation_id_invalid'],
-          code='activation_id_invalid',)
-      return activation_id
-    else:
+    id = self.cleaned_data.get("activation_id")
+    try:
+      activation_id = ActivationId.objects.get(value=id)
+      self.user = User.objects.get(id=activation_id.user_id, is_active=True)
+      if settings.USE_TZ:
+        expires_at = datetime.datetime.now(tz=pytz.timezone(settings.TIME_ZONE)) - datetime.timedelta(days=1)
+      else:
+        expires_at = datetime.datetime.now() - datetime.timedelta(days=1)
+      if activation_id.created_at < expires_at:
+        raise ValidationError(
+          self.error_messages['activation_id_expired'],
+          code='activation_id_expired',)
+    except ObjectDoesNotExist:
       raise forms.ValidationError(
-        self.error_messages['activation_id_missing'],
-        code='activation_id_missing',)
+        self.error_messages['activation_id_invalid'],
+        code='activation_id_invalid',)
+    return id
 
   def clean_mfa_token(self):
     mfa_token = self.cleaned_data.get('mfa_token')
@@ -144,15 +149,6 @@ class PasswordResetConfirmForm(authForms.PasswordChangeForm):
       self.error_messages['replayed_mfa_token'],
       code='replayed_mfa_token',
     )
-
-def activation_id_is_valid(activation_id):
-  if activation_id is not None:
-    try:
-      if ActivationId.objects.get(value=activation_id):
-        return True
-    except ObjectDoesNotExist:
-      return False
-  return False
 
 
 class PasswordChangeForm(authForms.PasswordChangeForm):
