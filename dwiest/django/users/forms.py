@@ -8,10 +8,11 @@ from django.contrib.auth import forms as authForms
 from django.utils.translation import ugettext, ugettext_lazy as _
 import uuid
 from .models import ActivationId
-from .email import generate_password_change_email, generate_password_reset_email, generate_registration_email, send_email
+from .email import generate_account_activation_email, generate_password_change_email, generate_password_reset_email, generate_registration_email, send_email
 from dwiest.django.users.mfa import MfaModel, NonstickyTextInput
 import pyotp
 import pytz
+
 
 class RegistrationForm(UserCreationForm):
   username = forms.EmailField(label='Email',initial='',max_length=50)
@@ -28,7 +29,7 @@ class RegistrationForm(UserCreationForm):
     user_activation_id = ActivationId(value=activation_id,user_id=user.id)
     user_activation_id.save()
 
-    if settings.SEND_EMAIL:
+    if hasattr(settings, 'SEND_EMAIL') and settings.SEND_EMAIL:
       recipients = [self.cleaned_data['username']]
       email_message = generate_registration_email(recipients, activation_id)
       send_email(settings.EMAIL_SENDER, recipients, email_message.as_string(), settings.SMTP_SERVER, smtp_server_login=settings.EMAIL_SENDER, smtp_server_password=settings.SMTP_SERVER_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
@@ -58,7 +59,7 @@ class SendPasswordResetForm(forms.Form):
       activation_id = ActivationId(user_id=user.id, value=uuid.uuid4())
     activation_id.save()
 
-    if settings.SEND_EMAIL:
+    if hasattr(settings, 'SEND_EMAIL') and settings.SEND_EMAIL:
       recipients = [email]
       email_message = generate_password_reset_email(recipients, activation_id.value)
       send_email(settings.EMAIL_SENDER, recipients, email_message.as_string(), settings.SMTP_SERVER, smtp_server_login=settings.EMAIL_SENDER, smtp_server_password=settings.SMTP_SERVER_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
@@ -165,6 +166,13 @@ class PasswordResetConfirmForm(authForms.PasswordChangeForm):
       print("!WARNING! Not deleting activation id")
     else:
       self.activation_id.delete()
+
+    # Send a password change email
+    if hasattr(settings, 'SEND_EMAIL') and settings.SEND_EMAIL:
+      recipients = [self.user.email]
+      email_message = generate_password_change_email(recipients)
+      send_email(settings.EMAIL_SENDER, recipients, email_message.as_string(), settings.SMTP_SERVER, smtp_server_login=settings.EMAIL_SENDER, smtp_server_password=settings.SMTP_SERVER_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
+
     return super().save()
 
 
@@ -243,6 +251,7 @@ class PasswordChangeForm(authForms.PasswordChangeForm):
       # Silently ignore an unknown email address or inactive user
       return
 
-    recipients = [email]
-    email_message = generate_password_change_email(recipients)
-    send_email(settings.EMAIL_SENDER, recipients, email_message.as_string(), settings.SMTP_SERVER, smtp_server_login=settings.EMAIL_SENDER, smtp_server_password=settings.SMTP_SERVER_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
+    if hasattr(settings, 'SEND_EMAIL') and settings.SEND_EMAIL:
+      recipients = [email]
+      email_message = generate_password_change_email(recipients)
+      send_email(settings.EMAIL_SENDER, recipients, email_message.as_string(), settings.SMTP_SERVER, smtp_server_login=settings.EMAIL_SENDER, smtp_server_password=settings.SMTP_SERVER_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
