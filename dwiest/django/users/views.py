@@ -129,13 +129,12 @@ class PasswordResetConfirmView(TemplateView):
     self.response_dict['form'] = form
 
     if form.is_valid():
-      form.save()
       # prevent the user from being logged out after a password change
       update_session_auth_hash(request, request.user)
       request.session['password_reset_confirm'] = True
       try:
-        record = ActivationId.objects.get(value=form.cleaned_data['activation_id'])
-        user = User.objects.get(id=record.user_id)
+        user = User.objects.get(id=form.activation_id.user_id)
+        form.save()
         recipients = [user.email]
         email_message = generate_password_change_email(recipients)
         send_email(settings.EMAIL_SENDER, recipients, email_message.as_string(), settings.SMTP_SERVER, smtp_server_login=settings.EMAIL_SENDER, smtp_server_password=settings.SMTP_SERVER_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
