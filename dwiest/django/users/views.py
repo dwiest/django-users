@@ -133,9 +133,8 @@ class PasswordResetConfirmView(TemplateView):
       update_session_auth_hash(request, request.user)
       request.session['password_reset_confirm'] = True
       try:
-        user = User.objects.get(id=form.activation_id.user_id)
         form.save()
-        recipients = [user.email]
+        recipients = [form.user.email]
         email_message = generate_password_change_email(recipients)
         send_email(settings.EMAIL_SENDER, recipients, email_message.as_string(), settings.SMTP_SERVER, smtp_server_login=settings.EMAIL_SENDER, smtp_server_password=settings.SMTP_SERVER_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
 
