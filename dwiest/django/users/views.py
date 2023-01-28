@@ -2,6 +2,7 @@ from django.conf import settings
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
+from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
@@ -114,8 +115,7 @@ class PasswordResetConfirmView(TemplateView):
   def get(self, request, *args, **kwargs):
     activation_id = request.GET.get('activation_id')
 
-    if activation_id_is_valid(activation_id) == False:
-      request.session['password_reset_failed'] = True
+    if activation_id is None:
       return HttpResponseRedirect(reverse(self.fail_page))
 
     else:
@@ -145,7 +145,14 @@ class PasswordResetConfirmView(TemplateView):
 
       return HttpResponseRedirect(reverse(self.success_page))
     else:
-      return render(request, self.template_name, self.response_dict)
+      # Don't allow form re-submission for activation id issues
+      if 'activation_id' in form.errors:
+        request.session['password_reset_failed'] = True
+        for error in form.errors['activation_id']:
+          messages.error(request, error)
+        return HttpResponseRedirect(reverse(self.fail_page))
+      else:
+        return render(request, self.template_name, self.response_dict)
 
 
 class PasswordResetConfirmSuccessView(TemplateView):
