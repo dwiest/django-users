@@ -45,17 +45,23 @@ class SendPasswordResetForm(forms.Form):
       # Silently ignore an unknown email address or inactive user
       return
 
-    # Re-use the activation id for the password reset link
-    activation_id = uuid.uuid4()
-    user_activation_id = ActivationId.objects.get(user_id=user.id)
-    user_activation_id.value = activation_id
-    user_activation_id.save()
+    # Re-use an activation id record it exists; don't allows multiple per-user
+    try:
+      activation_id = ActivationId.objects.get(user_id=user.id)
+      # Update the timestamp
+      if settings.USE_TZ:
+        activation_id.created_at = datetime.datetime.now(tz=pytz.timezone(settings.TIME_ZONE))
+      else:
+        activation_id.created_at = datetime.datetime.now()
+    except ObjectDoesNotExist:
+      # No record found, create a new one
+      activation_id = ActivationId(user_id=user.id, value=uuid.uuid4())
+    activation_id.save()
 
     if settings.SEND_EMAIL:
       recipients = [email]
-      email_message = generate_password_reset_email(recipients, activation_id)
+      email_message = generate_password_reset_email(recipients, activation_id.value)
       send_email(settings.EMAIL_SENDER, recipients, email_message.as_string(), settings.SMTP_SERVER, smtp_server_login=settings.EMAIL_SENDER, smtp_server_password=settings.SMTP_SERVER_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
-
 
 
 class PasswordResetConfirmForm(authForms.PasswordChangeForm):
@@ -98,20 +104,24 @@ class PasswordResetConfirmForm(authForms.PasswordChangeForm):
   def clean_activation_id(self):
     id = self.cleaned_data.get("activation_id")
     try:
-      activation_id = ActivationId.objects.get(value=id)
-      self.user = User.objects.get(id=activation_id.user_id, is_active=True)
-      if settings.USE_TZ:
-        expires_at = datetime.datetime.now(tz=pytz.timezone(settings.TIME_ZONE)) - datetime.timedelta(days=1)
-      else:
-        expires_at = datetime.datetime.now() - datetime.timedelta(days=1)
-      if activation_id.created_at < expires_at:
-        raise ValidationError(
-          self.error_messages['activation_id_expired'],
-          code='activation_id_expired',)
+      self.activation_id = ActivationId.objects.get(value=id)
+      self.user = User.objects.get(id=self.activation_id.user_id, is_active=True)
     except ObjectDoesNotExist:
       raise forms.ValidationError(
         self.error_messages['activation_id_invalid'],
         code='activation_id_invalid',)
+    # check if the activation_id has expired
+    if hasattr(settings, 'ACTIVATION_ID_IGNORE_EXPIRED') and settings.ACTIVATION_ID_IGNORE_EXPIRED:
+      print("!WARNING! Ignoring expired activation ids")
+    else:
+      if settings.USE_TZ:
+        expires_at = datetime.datetime.now(tz=pytz.timezone(settings.TIME_ZONE)) - datetime.timedelta(days=1)
+      else:
+        expires_at = datetime.datetime.now() - datetime.timedelta(days=1)
+      if self.activation_id.created_at < expires_at:
+        raise ValidationError(
+          self.error_messages['activation_id_expired'],
+          code='activation_id_expired',)
     return id
 
   def clean_mfa_token(self):
@@ -149,6 +159,13 @@ class PasswordResetConfirmForm(authForms.PasswordChangeForm):
       self.error_messages['replayed_mfa_token'],
       code='replayed_mfa_token',
     )
+
+  def save(self):
+    if hasattr(settings, 'ACTIVATION_ID_DO_NOT_DELETE') and settings.ACTIVATION_ID_DO_NOT_DELETE:
+      print("!WARNING! Not deleting activation id")
+    else:
+      self.activation_id.delete()
+    return super().save()
 
 
 class PasswordChangeForm(authForms.PasswordChangeForm):
