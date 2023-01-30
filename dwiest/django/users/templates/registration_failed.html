@@ -1,0 +1,27 @@
+<Html>
+<Head>
+  <Title>{{page_name}}</Title>
+{% include 'css.html' %}
+</Head>
+
+<Body>
+{% block header %}
+{% with title=page_name %}
+{% include 'header.html' %}
+{% endwith %}
+{% endblock %}
+
+<Div align="center">
+<H2>Sorry!</H2>
+{% for message in messages %}
+ <Div class="error-text">{{message}}</Div>
+{% endfor %}
+<P>
+Your account registration request has failed.  Please contact support for further assistance.
+</P>
+</Div>
+
+{% include 'footer.html' %}
+</body>
+
+</html>
