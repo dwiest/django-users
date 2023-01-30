@@ -1,6 +1,7 @@
 import datetime
 from django.conf import settings
 from django.contrib.auth.forms import UserCreationForm, SetPasswordForm
+from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django import forms
@@ -25,26 +26,47 @@ class RegistrationForm(UserCreationForm):
   def clean_username(self):
     username = self.cleaned_data['username']
     try:
-      User.objects.get(username=username)
-      raise forms.ValidationError(
-        self.error_messages['user_already_registered'],
-        code='user_already_registered',)
+      # save a reference to the user, used in save()
+      self.user = User.objects.get(username=username)
+
+      if getattr(settings, 'REGISTRATION_IGNORE_ALREADY_ACTIVE', False) == True:
+        print("!WARNING! allowing pre-existing user")
+      else:
+        raise forms.ValidationError(
+          self.error_messages['user_already_registered'],
+          code='user_already_registered',)
+
     except ObjectDoesNotExist:
       pass
+
     return username
 
+  # override BaseModelForm.clean() since it checks for uniqueness
+  def clean(self):
+    if getattr(settings, 'REGISTRATION_IGNORE_ALREADY_ACTIVE', False) == True:
+      print("!WARNING! allowing pre-existing user")
+      pass
+    else:
+      super().clean()
+
   def save(self):
-    # Create a user record
     username = self.cleaned_data.get('username')
     email = self.cleaned_data.get('username')
     password = self.cleaned_data.get('password1')
-    user = User.objects.create_user(username, email, password)
-    user.is_active=False
-    user.save()
+
+    # Create an account if one doesn't already exist
+    if getattr(self, 'user', None) == None:
+      self.user = User.objects.create_user(username, email, password)
+    else:
+      self.user.password = make_password(password)
+      pass
+
+    self.user.is_active=False
+    self.user.save()
 
     # Check if an activation record exists (it shouldn't); prevents multiple per-user
     try:
-      activation_id = ActivationId.objects.get(user_id=user.id)
+      activation_id = ActivationId.objects.get(user_id=self.user.id)
       # Update the timestamp if it does exist
       if settings.USE_TZ:
         activation_id.created_at = datetime.datetime.now(tz=pytz.timezone(settings.TIME_ZONE))
@@ -52,13 +74,13 @@ class RegistrationForm(UserCreationForm):
         activation_id.created_at = datetime.datetime.now()
     except ObjectDoesNotExist:
       # Create an activation id record if one doesn't exist (it shouldn't)
-      activation_id = ActivationId(value=uuid.uuid4(), user_id=user.id)
+      activation_id = ActivationId(value=uuid.uuid4(), user_id=self.user.id)
 
     activation_id.save()
 
     # send a registration email
-    if hasattr(settings, 'SEND_EMAIL') and settings.SEND_EMAIL:
-      recipients = [self.cleaned_data['username']]
+    if getattr(settings, 'SEND_EMAIL', False) == True:
+      recipients = [self.user.username]
       email_message = generate_registration_email(recipients, activation_id.value)
       send_email(settings.EMAIL_SENDER, recipients, email_message.as_string(), settings.SMTP_SERVER, smtp_server_login=settings.EMAIL_SENDER, smtp_server_password=settings.SMTP_SERVER_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
     #super().save() #doesn't allow duplicate email?
@@ -94,7 +116,7 @@ class RegistrationConfirmForm(forms.Form):
         code='activation_id_invalid',)
 
     # check if the activation_id has expired
-    if hasattr(settings, 'ACTIVATION_ID_IGNORE_EXPIRED') and settings.ACTIVATION_ID_IGNORE_EXPIRED:
+    if getattr(settings, 'ACTIVATION_ID_IGNORE_EXPIRED', False) == True:
       print("!WARNING! Ignoring expired activation ids")
     else:
       if settings.USE_TZ:
@@ -117,7 +139,9 @@ class RegistrationConfirmForm(forms.Form):
           self.error_messages['username_invalid'],
           code='username_invalid',)
 
-      if self.user.is_active == True:
+    if getattr(settings, 'REGISTRATION_IGNORE_ALREADY_ACTIVE', False) == True:
+      print("!WARNING! allowing pre-existing user")
+    elif self.user.is_active == True:
         raise ValidationError(
           self.error_messages['username_already_active'],
           code='username_already_active',)
@@ -128,14 +152,81 @@ class RegistrationConfirmForm(forms.Form):
     self.user.save()
 
     # delete the activation id record
-    if getattr(settings, 'ACTIVATION_ID_DO_NOT_DELETE', False):
+    if getattr(settings, 'ACTIVATION_ID_DO_NOT_DELETE', False) == True:
       print("!WARNING! Not deleting activation id")
     else:
       self.activation_id.delete()
 
-    if hasattr(settings, 'SEND_EMAIL') and settings.SEND_EMAIL:
+    if getattr(settings, 'SEND_EMAIL', False) == True:
       recipients = [self.user.email]
       email_message = generate_account_activation_email(recipients)
+      send_email(settings.EMAIL_SENDER, recipients, email_message.as_string(), settings.SMTP_SERVER, smtp_server_login=settings.EMAIL_SENDER, smtp_server_password=settings.SMTP_SERVER_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
+
+
+class RegistrationResendForm(forms.Form):
+
+  activation_id = forms.CharField(
+    label=_('Activation Id'),
+    required=True,
+    widget=forms.HiddenInput(),
+    )
+
+  error_messages = {
+    'username_invalid':
+      _("Your account could not be located."),
+    'username_already_active':
+      _("Your account has already been activated."),
+    'activation_id_expired':
+      _("Your account registration link has expired."),
+    'activation_id_invalid':
+      _("The activation id is invalid."),
+    }
+
+  def clean_activation_id(self):
+    activation_id = self.cleaned_data['activation_id']
+
+    try:
+      self.activation_id = ActivationId.objects.get(value=activation_id)
+    except ObjectDoesNotExist:
+      raise forms.ValidationError(
+        self.error_messages['activation_id_invalid'],
+        code='activation_id_invalid',)
+
+    return activation_id
+
+  def clean(self):
+    if getattr(self, 'activation_id', None) == None:
+      return
+
+    # Check that the user is not already active
+    try:
+      self.user = User.objects.get(id=self.activation_id.user_id)
+    except ObjectDoesNotExist:
+      raise ValidationError(
+        self.error_messages['username_invalid'],
+        code='username_invalid',)
+
+    if getattr(settings, 'REGISTRATION_IGNORE_ALREADY_ACTIVE', False) == True:
+      print("!WARNING! allowing pre-existing user")
+    elif self.user.is_active == True:
+      raise ValidationError(
+        self.error_messages['username_already_active'],
+        code='username_already_active',)
+
+  def save(self):
+    # Update the created_at timestamp
+    if getattr(settings, 'USE_TZ', True) == True:
+      timezone = pytz.timezone(getattr(settings, 'TIME_ZONE', 'UTC'))
+      self.activation_id.created_at = datetime.datetime.now(tz=timezone)
+    else:
+       self.activation_id.created_at = datetime.datetime.now()
+
+    self.activation_id.save()
+
+    # Send the registration email
+    if getattr(settings, 'SEND_EMAIL', True) == True:
+      recipients = [self.user.email]
+      email_message = generate_registration_email(recipients, self.activation_id.value)
       send_email(settings.EMAIL_SENDER, recipients, email_message.as_string(), settings.SMTP_SERVER, smtp_server_login=settings.EMAIL_SENDER, smtp_server_password=settings.SMTP_SERVER_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
 
 
@@ -163,7 +254,7 @@ class SendPasswordResetForm(forms.Form):
       activation_id = ActivationId(user_id=user.id, value=uuid.uuid4())
     activation_id.save()
 
-    if hasattr(settings, 'SEND_EMAIL') and settings.SEND_EMAIL:
+    if getattr(settings, 'SEND_EMAIL', False) == True:
       recipients = [email]
       email_message = generate_password_reset_email(recipients, activation_id.value)
       send_email(settings.EMAIL_SENDER, recipients, email_message.as_string(), settings.SMTP_SERVER, smtp_server_login=settings.EMAIL_SENDER, smtp_server_password=settings.SMTP_SERVER_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
@@ -216,7 +307,7 @@ class PasswordResetConfirmForm(authForms.PasswordChangeForm):
         self.error_messages['activation_id_invalid'],
         code='activation_id_invalid',)
     # check if the activation_id has expired
-    if hasattr(settings, 'ACTIVATION_ID_IGNORE_EXPIRED') and settings.ACTIVATION_ID_IGNORE_EXPIRED:
+    if getattr(settings, 'ACTIVATION_ID_IGNORE_EXPIRED', False) == True:
       print("!WARNING! Ignoring expired activation ids")
     else:
       if settings.USE_TZ:
@@ -232,7 +323,7 @@ class PasswordResetConfirmForm(authForms.PasswordChangeForm):
   def clean_mfa_token(self):
     mfa_token = self.cleaned_data.get('mfa_token')
 
-    if hasattr(settings, 'MFA_ACCEPT_ANY_VALUE') and settings.MFA_ACCEPT_ANY_VALUE:
+    if getattr(settings, 'MFA_ACCEPT_ANY_VALUE', False) == True:
       print("!WARNING! MFA accepting any value")
       mfa_token = None
 
@@ -266,13 +357,13 @@ class PasswordResetConfirmForm(authForms.PasswordChangeForm):
     )
 
   def save(self):
-    if hasattr(settings, 'ACTIVATION_ID_DO_NOT_DELETE') and settings.ACTIVATION_ID_DO_NOT_DELETE:
+    if getattr(settings, 'ACTIVATION_ID_DO_NOT_DELETE', False) == True:
       print("!WARNING! Not deleting activation id")
     else:
       self.activation_id.delete()
 
     # Send a password change email
-    if hasattr(settings, 'SEND_EMAIL') and settings.SEND_EMAIL:
+    if getattr(settings, 'SEND_EMAIL', False) == True:
       recipients = [self.user.email]
       email_message = generate_password_change_email(recipients)
       send_email(settings.EMAIL_SENDER, recipients, email_message.as_string(), settings.SMTP_SERVER, smtp_server_login=settings.EMAIL_SENDER, smtp_server_password=settings.SMTP_SERVER_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
@@ -309,7 +400,7 @@ class PasswordChangeForm(authForms.PasswordChangeForm):
   def clean_mfa_token(self):
     mfa_token = self.cleaned_data.get('mfa_token')
 
-    if hasattr(settings, 'MFA_ACCEPT_ANY_VALUE') and settings.MFA_ACCEPT_ANY_VALUE:
+    if getattr(settings, 'MFA_ACCEPT_ANY_VALUE', False) == True:
       print("!WARNING! MFA accepting any value")
       mfa_token = None
 
@@ -343,7 +434,7 @@ class PasswordChangeForm(authForms.PasswordChangeForm):
     )
 
   def save(self, commit=True):
-    if hasattr(settings, 'SEND_EMAIL') and settings.SEND_EMAIL:
+    if getattr(settings, 'SEND_EMAIL', False) == True:
       self._sendPasswordChangeEmail()
     super().save(commit)
 
@@ -355,7 +446,7 @@ class PasswordChangeForm(authForms.PasswordChangeForm):
       # Silently ignore an unknown email address or inactive user
       return
 
-    if hasattr(settings, 'SEND_EMAIL') and settings.SEND_EMAIL:
+    if getattr(settings, 'SEND_EMAIL', False) == True:
       recipients = [email]
       email_message = generate_password_change_email(recipients)
       send_email(settings.EMAIL_SENDER, recipients, email_message.as_string(), settings.SMTP_SERVER, smtp_server_login=settings.EMAIL_SENDER, smtp_server_password=settings.SMTP_SERVER_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
