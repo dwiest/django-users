@@ -12,47 +12,140 @@ from .email import generate_account_activation_email, send_email
 from .forms import *
 from .models import ActivationId
 
+login_page = 'login'
 status_page = 'home'
 
 class RegistrationView(FormView):
-  template_name = "user_registration.html"
+  page_name = 'User Registration'
+  template_name = 'registration.html'
+  success_page = 'registration_success'
+  fail_page = 'registration_failed'
   form_class = RegistrationForm
+
+  def __init__(self, *args, **kwargs):
+    self.response_dict = {
+      'page_name': self.page_name,
+    }
+
+  def get(self, request, *args, **kwargs):
+    form = self.form_class()
+    self.response_dict['form'] = form
+    return render(request, self.template_name, self.response_dict)
 
   def post(self, request, *args, **kwargs):
     form = RegistrationForm(request.POST)
 
     if form.is_valid():
-      form.register(request)
-      return render(request, self.template_name, {'form': form, 'completed': True})
+      form.save()
+      request.session['registration_success'] = True
+      return HttpResponseRedirect(reverse(self.success_page), self.response_dict)
     else:
-        return render(request, self.template_name, {'form': form, 'completed': False})
+      request.session['registration_failed'] = True
+      return HttpResponseRedirect(reverse(self.fail_page), self.response_dict)
 
 
-class ActivateRegistrationView(TemplateView):
-  template_name = "activate_registration.html"
+class RegistrationSuccessView(TemplateView):
+  page_name = 'Registration Successful'
+  template_name = 'registration_success.html'
+
+  def __init__(self, *args, **kwargs):
+    self.response_dict = {
+      'page_name': self.page_name,
+    }
 
   def get(self, request, *args, **kwargs):
+    if 'registration_success' in request.session:
+      request.session.pop('registration_success')
+      return render(request, self.template_name, self.response_dict)
+    else:
+      return HttpResponseRedirect(reverse(login_page))
+
+
+class RegistrationFailedView(TemplateView):
+  page_name = 'Registration Failed'
+  template_name = 'registration_failed.html'
+
+  def __init__(self, *args, **kwargs):
+    self.response_dict = {
+      'page_name': self.page_name,
+    }
+
+  def get(self, request, *args, **kwargs):
+    if 'registration_failed' in request.session:
+      request.session.pop('registration_failed')
+      return render(request, self.template_name, self.response_dict)
+    else:
+      return HttpResponseRedirect(reverse(login_page))
+
+
+class RegistrationConfirmView(TemplateView):
+  page_name = 'Confirm Account Registration'
+  template_name = None
+  success_page = 'registration_confirm_success'
+  fail_page = 'registration_confirm_failed'
+  form_class = RegistrationConfirmForm
+
+  def __init__(self, *args, **kwargs):
+    self.response_dict = {
+      'page_name': self.page_name,
+    }
+
+  def get(self, request, *args, **kwargs):
+    form = self.form_class(data=request.GET)
+
     activation_id = request.GET.get('activation_id')
+    if activation_id:
+      form.fields['activation_id'].initial = activation_id
+    else:
+      messages.error(request, 'The activation link was not valid.')
+      request.session['registration_confirm_failed'] = True
+      return HttpResponseRedirect(reverse(self.fail_page), self.response_dict)
 
-    try:
-      record = ActivationId.objects.get(value=activation_id)
-      user = User.objects.get(id=record.user_id)
+    if form.is_valid():
+      form.save()
+      request.session['registration_confirm_success'] = True
+      return HttpResponseRedirect(reverse(self.success_page), self.response_dict)
+    else:
+      for field, errors in form.errors.as_data().items():
+        for error in errors:
+          for msg in error:
+            messages.error(request, msg)
+      request.session['registration_confirm_failed'] = True
+      return HttpResponseRedirect(reverse(self.fail_page), self.response_dict)
 
-    except ObjectDoesNotExist:
-      return render(request, self.template_name, {'successful':False})
 
-    if user.is_active == True:
-        return render(request, self.template_name, {'successful':False,'already_active':True})
+class RegistrationConfirmSuccessView(TemplateView):
+  page_name = 'Account Activated'
+  template_name = 'registration_confirm_success.html'
 
-    user.is_active = True
-    user.save()
+  def __init__(self, *args, **kwargs):
+    self.response_dict = {
+      'page_name': self.page_name,
+    }
 
-    if hasattr(settings, 'SEND_EMAIL') and settings.SEND_EMAIL:
-      recipients = [user.email]
-      email_message = generate_account_activation_email(recipients)
-      send_email(settings.EMAIL_SENDER, recipients, email_message.as_string(), settings.SMTP_SERVER, smtp_server_login=settings.EMAIL_SENDER, smtp_server_password=settings.SMTP_SERVER_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
+  def get(self, request, *args, **kwargs):
+    if 'registration_confirm' in request.session:
+      request.session.pop('registration_confirm')
+      return render(request, self.template_name, self.response_dict)
+    else:
+      return HttpResponseRedirect(reverse(login_page))
 
-    return render(request, self.template_name, {'successful':True})
+
+class RegistrationConfirmFailedView(TemplateView):
+  page_name = 'Account Activation Failed'
+  template_name = 'registration_confirm_failed.html'
+
+  def __init__(self, *args, **kwargs):
+    self.response_dict = {
+      'page_name': self.page_name,
+    }
+
+  def get(self, request, *args, **kwargs):
+    if 'registration_confirm_failed' in request.session:
+      request.session.pop('registration_confirm_failed')
+      return render(request, self.template_name, self.response_dict)
+    else:
+      return HttpResponseRedirect(reverse(login_page), self.response_dict)
 
 
 class SendPasswordResetView(TemplateView):
@@ -97,7 +190,7 @@ class SendPasswordResetSuccessView(TemplateView):
       request.session.pop('password_reset')
       return render(request, self.template_name, self.response_dict)
     else:
-      return HttpResponseRedirect(reverse('login'))
+      return HttpResponseRedirect(reverse(login_page))
 
 
 class PasswordResetConfirmView(TemplateView):
