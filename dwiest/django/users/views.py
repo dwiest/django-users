@@ -148,6 +148,43 @@ class RegistrationConfirmFailedView(TemplateView):
       return HttpResponseRedirect(reverse(login_page), self.response_dict)
 
 
+class RegistrationResendView(TemplateView):
+  page_name = 'Resend Registration Email'
+  template_name = None
+  success_page = 'registration_success'
+  fail_page = 'registration_failed'
+  form_class = RegistrationResendForm
+
+  def __init__(self, *args, **kwargs):
+    self.response_dict = {
+      'page_name': self.page_name,
+    }
+
+  def get(self, request, *args, **kwargs):
+
+    if request.GET.get('activation_id') == None:
+      request.session[self.fail_page] = True
+      return HttpResponseRedirect(reverse(self.fail_page), self.response_dict)
+
+    elif getattr(settings, 'REGISTRATION_ALLOW_EMAIL_RESEND', False) != True:
+      messages.error(request, 'Re-sending of registration emails is not allowed.')
+      request.session[self.fail_page] = True
+      return HttpResponseRedirect(reverse(self.fail_page), self.response_dict)
+
+    form = self.form_class(data=request.GET)
+    if form.is_valid():
+      form.save()
+      request.session[self.success_page] = True
+      return HttpResponseRedirect(reverse(self.success_page), self.response_dict)
+    else:
+      for field, errors in form.errors.as_data().items():
+        for error in errors:
+          for msg in error:
+            messages.error(request, msg)
+      request.session[self.fail_page] = True
+      return HttpResponseRedirect(reverse(self.fail_page), self.response_dict)
+
+
 class SendPasswordResetView(TemplateView):
   page_name = 'Password Reset'
   template_name = 'send_password_reset.html'
