@@ -124,8 +124,8 @@ class RegistrationConfirmSuccessView(TemplateView):
     }
 
   def get(self, request, *args, **kwargs):
-    if 'registration_confirm' in request.session:
-      request.session.pop('registration_confirm')
+    if 'registration_confirm_success' in request.session:
+      request.session.pop('registration_confirm_success')
       return render(request, self.template_name, self.response_dict)
     else:
       return HttpResponseRedirect(reverse(login_page))
