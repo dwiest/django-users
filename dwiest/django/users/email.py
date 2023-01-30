@@ -8,7 +8,7 @@ import smtplib
 def generate_registration_email(recipients, activation_id):
   subject = settings.REGISTRATION_EMAIL_SUBJECT
   sender = settings.EMAIL_SENDER
-  link = "https://wiest.world/django/activate?id={}".format(activation_id)
+  link = "https://wiest.world/django/registration/confirm?activation_id={}".format(activation_id)
   html_template = get_template(settings.REGISTRATION_EMAIL_HTML)
   text_template = get_template(settings.REGISTRATION_EMAIL_TEXT)
   html_body = html_template.render({'link':link})
