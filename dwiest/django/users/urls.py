@@ -73,6 +73,10 @@ urlpatterns = [
     RegistrationFailedView.as_view(),
     name='registration_failed'
     ),
+  path('registration/resend/',
+    RegistrationResendView.as_view(),
+    name='registration_resend'
+    ),
   path('registration/confirm/',
     RegistrationConfirmView.as_view(),
     name='registration_confirm'
