@@ -1,10 +1,21 @@
-<html>
-<head>
-  <title>Registration Success</title>
-</head>
+<Html>
+<Head>
+  <Title>{{page_name}}</Title>
+{% include 'css.html' %}
+</Head>
 
-<body>
-User registration was successful
-</body>
+<Body>
+{% block header %}
+{% with title=page_name %}
+{% include 'header.html' %}
+{% endwith %}
+{% endblock %}
 
-</html>
+<Div align="center">
+<H2>Thank you!</H2>
+<P>Thank you for registering! Please check your email for an activation link.</P>
+</Div>
+{% include 'footer.html' %}
+</Body>
+
+</Html>
