@@ -123,8 +123,15 @@ class RegistrationConfirmForm(forms.Form):
           code='username_already_active',)
 
   def save(self):
+    # mark the user as active
     self.user.is_active = True
     self.user.save()
+
+    # delete the activation id record
+    if getattr(settings, 'ACTIVATION_ID_DO_NOT_DELETE', False):
+      print("!WARNING! Not deleting activation id")
+    else:
+      self.activation_id.delete()
 
     if hasattr(settings, 'SEND_EMAIL') and settings.SEND_EMAIL:
       recipients = [self.user.email]
