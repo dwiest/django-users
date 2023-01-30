@@ -1,0 +1,23 @@
+<Html>
+<Head>
+  <Title>{{page_name}}</Title>
+  {% include "css.html" %}
+</Head>
+
+<Body>
+{% block header %}
+{% with title=page_name %}
+{% include 'header.html' %}
+{% endwith %}
+{% endblock %}
+
+<Div align="center">
+<H2>Success!</H2>
+<P>
+Your account was activated.  You may login <A href="{% url 'login' %}">here</A>.
+</P>
+</Div>
+
+{% include 'footer.html' %}
+</Body>
+</Html>
