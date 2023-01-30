@@ -17,21 +17,118 @@ import pytz
 class RegistrationForm(UserCreationForm):
   username = forms.EmailField(label='Email',initial='',max_length=50)
 
-  def register(self, request):
-    # form to sign up is valid
+  UserCreationForm.error_messages.update({
+    'user_already_registered':
+      _("That email address has already been registered."),
+    })
+
+  def clean_username(self):
+    username = self.cleaned_data['username']
+    try:
+      User.objects.get(username=username)
+      raise forms.ValidationError(
+        self.error_messages['user_already_registered'],
+        code='user_already_registered',)
+    except ObjectDoesNotExist:
+      pass
+    return username
+
+  def save(self):
+    # Create a user record
     username = self.cleaned_data.get('username')
     email = self.cleaned_data.get('username')
     password = self.cleaned_data.get('password1')
     user = User.objects.create_user(username, email, password)
     user.is_active=False
     user.save()
-    activation_id = uuid.uuid4()
-    user_activation_id = ActivationId(value=activation_id,user_id=user.id)
-    user_activation_id.save()
 
+    # Check if an activation record exists (it shouldn't); prevents multiple per-user
+    try:
+      activation_id = ActivationId.objects.get(user_id=user.id)
+      # Update the timestamp if it does exist
+      if settings.USE_TZ:
+        activation_id.created_at = datetime.datetime.now(tz=pytz.timezone(settings.TIME_ZONE))
+      else:
+        activation_id.created_at = datetime.datetime.now()
+    except ObjectDoesNotExist:
+      # Create an activation id record if one doesn't exist (it shouldn't)
+      activation_id = ActivationId(value=uuid.uuid4(), user_id=user.id)
+
+    activation_id.save()
+
+    # send a registration email
     if hasattr(settings, 'SEND_EMAIL') and settings.SEND_EMAIL:
       recipients = [self.cleaned_data['username']]
-      email_message = generate_registration_email(recipients, activation_id)
+      email_message = generate_registration_email(recipients, activation_id.value)
+      send_email(settings.EMAIL_SENDER, recipients, email_message.as_string(), settings.SMTP_SERVER, smtp_server_login=settings.EMAIL_SENDER, smtp_server_password=settings.SMTP_SERVER_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
+    #super().save() #doesn't allow duplicate email?
+
+
+class RegistrationConfirmForm(forms.Form):
+
+  activation_id = forms.CharField(
+    label=_('Activation Id'),
+    required=True,
+    widget=forms.HiddenInput(),
+    )
+
+  error_messages = {
+    'username_invalid':
+      _("Your account could not be located."),
+    'username_already_active':
+      _("Your account has already been activated."),
+    'activation_id_expired': 
+      _("Your account registration link has expired."),
+    'activation_id_invalid': 
+      _("The activation id is invalid."),
+    }
+
+  def clean_activation_id(self):
+    activation_id = self.cleaned_data['activation_id']
+
+    try:
+      self.activation_id = ActivationId.objects.get(value=activation_id)
+    except ObjectDoesNotExist:
+      raise forms.ValidationError(
+        self.error_messages['activation_id_invalid'],
+        code='activation_id_invalid',)
+
+    # check if the activation_id has expired
+    if hasattr(settings, 'ACTIVATION_ID_IGNORE_EXPIRED') and settings.ACTIVATION_ID_IGNORE_EXPIRED:
+      print("!WARNING! Ignoring expired activation ids")
+    else:
+      if settings.USE_TZ:
+        expires_at = datetime.datetime.now(tz=pytz.timezone(settings.TIME_ZONE)) - datetime.timedelta(days=1)
+      else:
+        expires_at = datetime.datetime.now() - datetime.timedelta(days=1)
+      if self.activation_id.created_at < expires_at:
+        raise ValidationError(
+          self.error_messages['activation_id_expired'],
+          code='activation_id_expired',)
+
+    return activation_id
+
+  def clean(self):
+    if hasattr(self, 'activation_id'):
+      try:
+        self.user = User.objects.get(id=self.activation_id.user_id)
+      except ObjectDoesNotExist:
+        raise ValidationError(
+          self.error_messages['username_invalid'],
+          code='username_invalid',)
+
+      if self.user.is_active == True:
+        raise ValidationError(
+          self.error_messages['username_already_active'],
+          code='username_already_active',)
+
+  def save(self):
+    self.user.is_active = True
+    self.user.save()
+
+    if hasattr(settings, 'SEND_EMAIL') and settings.SEND_EMAIL:
+      recipients = [self.user.email]
+      email_message = generate_account_activation_email(recipients)
       send_email(settings.EMAIL_SENDER, recipients, email_message.as_string(), settings.SMTP_SERVER, smtp_server_login=settings.EMAIL_SENDER, smtp_server_password=settings.SMTP_SERVER_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
 
 
