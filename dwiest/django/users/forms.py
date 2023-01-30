@@ -87,7 +87,6 @@ class RegistrationForm(UserCreationForm):
 
 
 class RegistrationConfirmForm(forms.Form):
-
   activation_id = forms.CharField(
     label=_('Activation Id'),
     required=True,
@@ -180,6 +179,8 @@ class RegistrationResendForm(forms.Form):
       _("Your account registration link has expired."),
     'activation_id_invalid':
       _("The activation id is invalid."),
+    'resend_not_allowed':
+      _("Re-sending of registration emails is not allowed."),
     }
 
   def clean_activation_id(self):
@@ -195,8 +196,10 @@ class RegistrationResendForm(forms.Form):
     return activation_id
 
   def clean(self):
-    if getattr(self, 'activation_id', None) == None:
-      return
+    if getattr(settings, 'REGISTRATION_ALLOW_EMAIL_RESEND', False) != True:
+      raise ValidationError(
+        self.error_messages['resend_not_allowed'],
+        code='resend_not_allowed')
 
     # Check that the user is not already active
     try:
