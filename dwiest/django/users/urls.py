@@ -21,10 +21,6 @@ from dwiest.django.auth.views import LoginView, PasswordChangeView
 from .views import *
 
 urlpatterns = [
-  path('activate',
-    ActivateRegistrationView.as_view(),
-    name='activate'
-    ),
   path('login/',
     LoginView.as_view(),
     name='login'
@@ -65,8 +61,28 @@ urlpatterns = [
     PasswordChangeSuccessView.as_view(),
     name='change_password_success'
     ),
-  path('register/',
+  path('registration/',
     RegistrationView.as_view(),
-    name='register'
+    name='registration'
+    ),
+  path('registration/success/',
+    RegistrationSuccessView.as_view(),
+    name='registration_success'
+    ),
+  path('registration/failed/',
+    RegistrationFailedView.as_view(),
+    name='registration_failed'
+    ),
+  path('registration/confirm/',
+    RegistrationConfirmView.as_view(),
+    name='registration_confirm'
+    ),
+  path('registration/confirm/failed/',
+    RegistrationConfirmFailedView.as_view(),
+    name='registration_confirm_failed'
+    ),
+  path('registration/confirm/success/',
+    RegistrationConfirmSuccessView.as_view(),
+    name='registration_confirm_success'
     ),
 ]
