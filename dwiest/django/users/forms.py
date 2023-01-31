@@ -17,9 +17,12 @@ import pytz
 
 class RegistrationForm(UserCreationForm):
   username = forms.EmailField(label='Email',initial='',max_length=50)
+  activation_id = None
 
   UserCreationForm.error_messages.update({
-    'user_already_registered':
+    'user_already_activated':
+      _("That account has already been activated."),
+    'user_already_exists':
       _("That email address has already been registered."),
     })
 
@@ -29,12 +32,23 @@ class RegistrationForm(UserCreationForm):
       # save a reference to the user, used in save()
       self.user = User.objects.get(username=username)
 
+      # activation_id _should_ exist, but maybe not?
+      try:
+        self.activation_id = ActivationId.objects.get(user_id=self.user.id)
+      except ObjectDoesNotExist:
+        pass
+
       if getattr(settings, 'REGISTRATION_IGNORE_ALREADY_ACTIVE', False) == True:
         print("!WARNING! allowing pre-existing user")
       else:
-        raise forms.ValidationError(
-          self.error_messages['user_already_registered'],
-          code='user_already_registered',)
+        if self.user.is_active == True:
+          raise forms.ValidationError(
+            self.error_messages['user_already_activated'],
+            code='user_already_activated',)
+        else:
+          raise forms.ValidationError(
+            self.error_messages['user_already_exists'],
+            code='user_already_exists',)
 
     except ObjectDoesNotExist:
       pass
@@ -94,9 +108,9 @@ class RegistrationConfirmForm(forms.Form):
     )
 
   error_messages = {
-    'username_invalid':
+    'user_invalid':
       _("Your account could not be located."),
-    'username_already_active':
+    'user_already_exists':
       _("Your account has already been activated."),
     'activation_id_expired': 
       _("Your account registration link has expired."),
@@ -135,15 +149,15 @@ class RegistrationConfirmForm(forms.Form):
         self.user = User.objects.get(id=self.activation_id.user_id)
       except ObjectDoesNotExist:
         raise ValidationError(
-          self.error_messages['username_invalid'],
-          code='username_invalid',)
+          self.error_messages['user_invalid'],
+          code='user_invalid',)
 
     if getattr(settings, 'REGISTRATION_IGNORE_ALREADY_ACTIVE', False) == True:
       print("!WARNING! allowing pre-existing user")
     elif self.user.is_active == True:
         raise ValidationError(
-          self.error_messages['username_already_active'],
-          code='username_already_active',)
+          self.error_messages['user_already_exists'],
+          code='user_already_exists',)
 
   def save(self):
     # mark the user as active
