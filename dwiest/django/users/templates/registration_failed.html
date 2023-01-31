@@ -13,12 +13,21 @@
 
 <Div align="center">
 <H2>Sorry!</H2>
+
 {% for message in messages %}
  <Div class="error-text">{{message}}</Div>
 {% endfor %}
+
 <P>
 Your account registration request has failed.  Please contact support for further assistance.
 </P>
+
+{% if request.GET.activation_id %}
+<P>
+Click <A href="{% url 'registration_resend' %}?activation_id={{request.GET.activation_id}}">here</A> if you would like to receive a new registration link.
+</P>
+{% endif %}
+
 </Div>
 
 {% include 'footer.html' %}
