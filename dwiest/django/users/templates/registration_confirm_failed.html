@@ -19,9 +19,14 @@
 <P>
 Your account activation request has failed.  Please contact support for further assistance.
 </P>
+
+{% if request.GET.activation_id %}
+<P>
+Click <A href="{% url 'registration_resend' %}?activation_id={{request.GET.activation_id}}">here</A> if you would like to receive a new registration link.
+</P>
+{% endif %}
 </Div>
-
 {% include 'footer.html' %}
-</body>
+</Body>
 
-</html>
+</Html>
