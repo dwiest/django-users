@@ -8,6 +8,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 from django.views.generic import FormView, TemplateView
+import json
 from .email import generate_account_activation_email, send_email
 from .forms import *
 from .models import ActivationId
@@ -34,14 +35,32 @@ class RegistrationView(FormView):
 
   def post(self, request, *args, **kwargs):
     form = RegistrationForm(request.POST)
+    query_string = ''
+    process_errors = True
 
     if form.is_valid():
       form.save()
       request.session['registration_success'] = True
       return HttpResponseRedirect(reverse(self.success_page), self.response_dict)
     else:
+      form_errors = json.loads(form.errors.as_json()) # as_data() ddoesn't include the code
+
+      # if an account has already been activated don't show the other errors
+      if 'username' in form_errors:
+        for error in form_errors['username']:
+          if error['code'] == 'user_already_activated':
+            messages.error(request, error['message'])
+            process_errors = False
+
+      if process_errors:
+        for field, errors in form_errors.items():
+          for error in errors:
+            messages.error(request, error['message'])
+            if error['code'] == 'user_already_exists' and form.activation_id:
+              query_string = '?activation_id=' + form.activation_id.value
+
       request.session['registration_failed'] = True
-      return HttpResponseRedirect(reverse(self.fail_page), self.response_dict)
+      return HttpResponseRedirect(reverse(self.fail_page) + query_string, self.response_dict)
 
 
 class RegistrationSuccessView(TemplateView):
@@ -92,7 +111,10 @@ class RegistrationConfirmView(TemplateView):
 
   def get(self, request, *args, **kwargs):
     form = self.form_class(data=request.GET)
+    query_string = ''
+    process_errors = True
 
+    # Ensure that an activation_id parameter was present in the query string
     activation_id = request.GET.get('activation_id')
     if activation_id:
       form.fields['activation_id'].initial = activation_id
@@ -106,12 +128,24 @@ class RegistrationConfirmView(TemplateView):
       request.session['registration_confirm_success'] = True
       return HttpResponseRedirect(reverse(self.success_page), self.response_dict)
     else:
-      for field, errors in form.errors.as_data().items():
-        for error in errors:
-          for msg in error:
-            messages.error(request, msg)
+      form_errors = json.loads(form.errors.as_json()) # as_data() ddoesn't include the code
+
+      # if an account has already been activated don't show the other errors
+      if '__all__' in form_errors:
+        for error in form_errors['__all__']:
+          if error['code'] == 'user_already_exists':
+            messages.error(request, error['message'])
+            process_errors = False
+
+      if process_errors:
+        for field, errors in form_errors.items():
+          for error in errors:
+            messages.error(request, error['message'])
+            if error['code'] == 'activation_id_expired':
+              query_string = '?activation_id=' + activation_id
+
       request.session['registration_confirm_failed'] = True
-      return HttpResponseRedirect(reverse(self.fail_page), self.response_dict)
+      return HttpResponseRedirect(reverse(self.fail_page) + query_string, self.response_dict)
 
 
 class RegistrationConfirmSuccessView(TemplateView):
