@@ -1,9 +1,9 @@
 from django.contrib.auth import forms
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.forms import CharField
-from django.conf import settings
 from django.utils.translation import gettext, gettext_lazy as _
 from dwiest.django.users.mfa import MfaModel, NonstickyTextInput
+from dwiest.django.users.conf import settings
 import pyotp
 
 class AuthenticationForm(forms.AuthenticationForm):
@@ -27,7 +27,7 @@ class AuthenticationForm(forms.AuthenticationForm):
     super().clean()
     mfa_token = self.cleaned_data.get('mfa_token')
 
-    if hasattr(settings, 'MFA_ACCEPT_ANY_VALUE') and settings.MFA_ACCEPT_ANY_VALUE:
+    if hasattr(settings, 'USERS_MFA_ACCEPT_ANY_VALUE') and settings.USER_MFA_ACCEPT_ANY_VALUE:
       print("!WARNING! MFA accepting any value")
       mfa_token = None
 
