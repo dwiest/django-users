@@ -7,7 +7,7 @@ import smtplib
 
 def generate_registration_email(recipients, activation_id):
   subject = settings.REGISTRATION_EMAIL_SUBJECT
-  sender = settings.EMAIL_SENDER
+  sender = settings.DEFAULT_FROM_EMAIL
   link = "https://wiest.world/django/registration/confirm?activation_id={}".format(activation_id)
   html_template = get_template(settings.REGISTRATION_EMAIL_HTML)
   text_template = get_template(settings.REGISTRATION_EMAIL_TEXT)
@@ -25,7 +25,7 @@ def generate_registration_email(recipients, activation_id):
 
 def generate_account_activation_email(recipients):
   subject = settings.ACCOUNT_ACTIVATION_EMAIL_SUBJECT
-  sender = settings.EMAIL_SENDER
+  sender = settings.DEFAULT_FROM_EMAIL
   html_template = get_template(settings.ACCOUNT_ACTIVATION_EMAIL_HTML)
   text_template = get_template(settings.ACCOUNT_ACTIVATION_EMAIL_TEXT)
   html_body = html_template.render()
@@ -42,7 +42,7 @@ def generate_account_activation_email(recipients):
 
 def generate_password_reset_email(recipients, activation_id):
   subject = settings.PASSWORD_RESET_EMAIL_SUBJECT
-  sender = settings.EMAIL_SENDER
+  sender = settings.DEFAULT_FROM_EMAIL
   link = "https://wiest.world/django/password/reset/confirm?activation_id={}".format(activation_id)
   html_template = get_template(settings.PASSWORD_RESET_EMAIL_HTML)
   text_template = get_template(settings.PASSWORD_RESET_EMAIL_TEXT)
@@ -60,7 +60,7 @@ def generate_password_reset_email(recipients, activation_id):
 
 def generate_password_change_email(recipients):
   subject = settings.PASSWORD_CHANGE_EMAIL_SUBJECT
-  sender = settings.EMAIL_SENDER
+  sender = settings.DEFAULT_FROM_EMAIL
   html_template = get_template(settings.PASSWORD_CHANGE_EMAIL_HTML)
   text_template = get_template(settings.PASSWORD_CHANGE_EMAIL_TEXT)
   html_body = html_template.render()
