@@ -30,14 +30,14 @@ class UsersAppConf(AppConf):
   '''
     Activation id settings:
 
-      ACTIVATION_ID_IGNORE_EXPIRED - Allow activation ids that have 
+      ACTIVATION_ID_ALLOW_EXPIRED - Allow activation ids that have
         expired.  Intended for debug/test purposes.
 
       ACTIVATION_ID_DO_NOT_DELETE - Don't delete the activation id 
         record after use.  Intended for debug/test purposes.
   '''
 
-  ACTIVATION_ID_IGNORE_EXPIRED = False
+  ACTIVATION_ID_ALLOW_EXPIRED = False
   ACTIVATION_ID_DO_NOT_DELETE = False
 
   '''
@@ -46,12 +46,12 @@ class UsersAppConf(AppConf):
       REGISTRATION_ALLOW_EMAIL_RESEND - Allow users to re-request their
         registration email.
 
-      REGISTRATION_IGNORE_ALREADY_ACTIVE - Allow active users to 
+      REGISTRATION_ALLOW_ALREADY_ACTIVE - Allow active users to
         re-register for an account.  Intended for debug/test purposes.
   '''
 
   REGISTRATION_ALLOW_EMAIL_RESEND = False
-  REGISTRATION_IGNORE_ALREADY_ACTIVE = False
+  REGISTRATION_ALLOW_ALREADY_ACTIVE = False
 
   '''
   MFA settings:

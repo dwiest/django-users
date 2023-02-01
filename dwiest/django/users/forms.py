@@ -40,8 +40,7 @@ class RegistrationForm(UserCreationForm):
       except ObjectDoesNotExist:
         pass
 
-      print('USERS_REGISTRATION_IGNORE_ALREADY_ACTIVE: ' + str(getattr(settings, 'USERS_REGISTRATION_IGNORE_ALREADY_ACTIVE', 'not found?')))
-      if getattr(settings, 'USERS_REGISTRATION_IGNORE_ALREADY_ACTIVE', False) == True:
+      if getattr(settings, 'USERS_REGISTRATION_ALLOW_ALREADY_ACTIVE', False) == True:
         print("!WARNING! allowing pre-existing user")
       else:
         if self.user.is_active == True:
@@ -60,7 +59,7 @@ class RegistrationForm(UserCreationForm):
 
   # override BaseModelForm.clean() since it checks for uniqueness
   def clean(self):
-    if getattr(settings, 'USERS_REGISTRATION_IGNORE_ALREADY_ACTIVE', False) == True:
+    if getattr(settings, 'USERS_REGISTRATION_ALLOW_ALREADY_ACTIVE', False) == True:
       print("!WARNING! allowing pre-existing user")
       pass
     else:
@@ -132,7 +131,7 @@ class RegistrationConfirmForm(forms.Form):
         code='activation_id_invalid',)
 
     # check if the activation_id has expired
-    if getattr(settings, 'USERS_ACTIVATION_ID_IGNORE_EXPIRED', False) == True:
+    if getattr(settings, 'USERS_ACTIVATION_ID_ALLOW_EXPIRED', False) == True:
       print("!WARNING! Ignoring expired activation ids")
     else:
       if settings.USE_TZ:
@@ -155,7 +154,7 @@ class RegistrationConfirmForm(forms.Form):
           self.error_messages['user_invalid'],
           code='user_invalid',)
 
-    if getattr(settings, 'USERS_REGISTRATION_IGNORE_ALREADY_ACTIVE', False) == True:
+    if getattr(settings, 'USERS_REGISTRATION_ALLOW_ALREADY_ACTIVE', False) == True:
       print("!WARNING! allowing pre-existing user")
     elif self.user.is_active == True:
         raise ValidationError(
@@ -226,7 +225,7 @@ class RegistrationResendForm(forms.Form):
         self.error_messages['username_invalid'],
         code='username_invalid',)
 
-    if getattr(settings, 'USERS_REGISTRATION_IGNORE_ALREADY_ACTIVE', False) == True:
+    if getattr(settings, 'USERS_REGISTRATION_ALLOW_ALREADY_ACTIVE', False) == True:
       print("!WARNING! allowing pre-existing user")
     elif self.user.is_active == True:
       raise ValidationError(
@@ -327,7 +326,7 @@ class PasswordResetConfirmForm(authForms.PasswordChangeForm):
         self.error_messages['activation_id_invalid'],
         code='activation_id_invalid',)
     # check if the activation_id has expired
-    if getattr(settings, 'USERS_ACTIVATION_ID_IGNORE_EXPIRED', False) == True:
+    if getattr(settings, 'USERS_ACTIVATION_ID_ALLOW_EXPIRED', False) == True:
       print("!WARNING! Ignoring expired activation ids")
     else:
       if settings.USE_TZ:
