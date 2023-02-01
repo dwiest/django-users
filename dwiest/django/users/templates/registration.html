@@ -18,13 +18,16 @@
 {% csrf_token %}
 <table>
   <tr>
-    <td><label for="username">Email:</label></td><td><input type="text" name="username" value="{{form.username.value}}" required></input></td>
+    <td>{{form.username.label}}:</td>
+    <td>{{form.username}}</td>
   </tr>
   <tr>
-    <td><label for="password1">Password:</label></td><td><input type="password" name="password1" required></input></td>
+    <td>{{form.password1.label}}:</td>
+    <td>{{form.password1}}</td>
   </tr>
   <tr>
-    <td><label for="password2">Confirm Password:</label></td><td><input type="password" name="password2" required></input></td>
+    <td>{{form.password2.label}}:</td>
+    <td>{{form.password2}}</td>
   </tr>
   <tr>
     <td colspan="2"><DIV align="center"><input type="submit"></input></DIV></td>
