@@ -8,26 +8,26 @@
 {% if completed != True %}
 <Div align="center">
 <H1>User RegisTration</H1>
-{% for field in Form %}
+{% for field in form %}
   {% for error in field.errors %}
   <Div class="error-text">{{error}}</Div>
   {% endfor %}
 {% endfor %}
 </ul>
-<Form action="/django/regisTration/" method="POST">
+<Form action="/django/registration/" method="POST">
 {% csrf_token %}
 <Table>
   <Tr>
-    <Td>{{Form.username.label}}:</Td>
-    <Td>{{Form.username}}</Td>
+    <Td>{{form.username.label}}:</Td>
+    <Td>{{form.username}}</Td>
   </Tr>
   <Tr>
-    <Td>{{Form.password1.label}}:</Td>
-    <Td>{{Form.password1}}</Td>
+    <Td>{{form.password1.label}}:</Td>
+    <Td>{{form.password1}}</Td>
   </Tr>
   <Tr>
-    <Td>{{Form.password2.label}}:</Td>
-    <Td>{{Form.password2}}</Td>
+    <Td>{{form.password2.label}}:</Td>
+    <Td>{{form.password2}}</Td>
   </Tr>
   <Tr>
     <Td colspan="2"><DIV align="center"><input type="submit"></input></DIV></Td>
