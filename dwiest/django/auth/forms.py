@@ -27,7 +27,7 @@ class AuthenticationForm(forms.AuthenticationForm):
     super().clean()
     mfa_token = self.cleaned_data.get('mfa_token')
 
-    if hasattr(settings, 'USERS_MFA_ACCEPT_ANY_VALUE') and settings.USER_MFA_ACCEPT_ANY_VALUE:
+    if hasattr(settings, 'USERS_MFA_ACCEPT_ANY_VALUE') and settings.USERS_MFA_ACCEPT_ANY_VALUE:
       print("!WARNING! MFA accepting any value")
       mfa_token = None
 
