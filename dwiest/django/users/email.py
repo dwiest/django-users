@@ -81,7 +81,10 @@ def send_email(sender, recipients, message, smtp_server, smtp_server_port=465, s
     socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, proxy_server, proxy_port)
     socks.wrapmodule(smtplib)
 
-  server = smtplib.SMTP_SSL(smtp_server, smtp_server_port)
+  if settings.EMAIL_USE_SSL == True:
+    server = smtplib.SMTP_SSL(smtp_server, smtp_server_port)
+  else:
+    server = smtplib.SMTP(smtp_server, smtp_server_port)
   server.login(smtp_server_login, smtp_server_password)
   server.sendmail(sender, recipients, message)
   server.quit()
