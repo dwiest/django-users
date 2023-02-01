@@ -93,10 +93,10 @@ class RegistrationForm(UserCreationForm):
     activation_id.save()
 
     # send a registration email
-    if getattr(settings, 'SEND_EMAIL', False) == True:
+    if getattr(settings, 'EMAIL_SEND', False) == True:
       recipients = [self.user.username]
       email_message = generate_registration_email(recipients, activation_id.value)
-      send_email(settings.EMAIL_SENDER, recipients, email_message.as_string(), settings.SMTP_SERVER, smtp_server_login=settings.EMAIL_SENDER, smtp_server_password=settings.SMTP_SERVER_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
+      send_email(settings.EMAIL_SENDER, recipients, email_message.as_string(), settings.EMAIL_HOST, smtp_server_login=settings.EMAIL_SENDER, smtp_server_password=settings.EMAIL_HOST_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
     #super().save() #doesn't allow duplicate email?
 
 
@@ -170,10 +170,10 @@ class RegistrationConfirmForm(forms.Form):
     else:
       self.activation_id.delete()
 
-    if getattr(settings, 'SEND_EMAIL', False) == True:
+    if getattr(settings, 'EMAIL_SEND', False) == True:
       recipients = [self.user.email]
       email_message = generate_account_activation_email(recipients)
-      send_email(settings.EMAIL_SENDER, recipients, email_message.as_string(), settings.SMTP_SERVER, smtp_server_login=settings.EMAIL_SENDER, smtp_server_password=settings.SMTP_SERVER_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
+      send_email(settings.EMAIL_SENDER, recipients, email_message.as_string(), settings.EMAIL_HOST, smtp_server_login=settings.EMAIL_SENDER, smtp_server_password=settings.EMAIL_HOST_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
 
 
 class RegistrationResendForm(forms.Form):
@@ -241,10 +241,10 @@ class RegistrationResendForm(forms.Form):
     self.activation_id.save()
 
     # Send the registration email
-    if getattr(settings, 'SEND_EMAIL', True) == True:
+    if getattr(settings, 'EMAIL_SEND', True) == True:
       recipients = [self.user.email]
       email_message = generate_registration_email(recipients, self.activation_id.value)
-      send_email(settings.EMAIL_SENDER, recipients, email_message.as_string(), settings.SMTP_SERVER, smtp_server_login=settings.EMAIL_SENDER, smtp_server_password=settings.SMTP_SERVER_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
+      send_email(settings.EMAIL_SENDER, recipients, email_message.as_string(), settings.EMAIL_HOST, smtp_server_login=settings.EMAIL_SENDER, smtp_server_password=settings.EMAIL_HOST_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
 
 
 class SendPasswordResetForm(forms.Form):
@@ -271,10 +271,10 @@ class SendPasswordResetForm(forms.Form):
       activation_id = ActivationId(user_id=user.id, value=uuid.uuid4())
     activation_id.save()
 
-    if getattr(settings, 'SEND_EMAIL', False) == True:
+    if getattr(settings, 'EMAIL_SEND', False) == True:
       recipients = [email]
       email_message = generate_password_reset_email(recipients, activation_id.value)
-      send_email(settings.EMAIL_SENDER, recipients, email_message.as_string(), settings.SMTP_SERVER, smtp_server_login=settings.EMAIL_SENDER, smtp_server_password=settings.SMTP_SERVER_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
+      send_email(settings.EMAIL_SENDER, recipients, email_message.as_string(), settings.EMAIL_HOST, smtp_server_login=settings.EMAIL_SENDER, smtp_server_password=settings.EMAIL_HOST_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
 
 
 class PasswordResetConfirmForm(authForms.PasswordChangeForm):
@@ -380,10 +380,10 @@ class PasswordResetConfirmForm(authForms.PasswordChangeForm):
       self.activation_id.delete()
 
     # Send a password change email
-    if getattr(settings, 'SEND_EMAIL', False) == True:
+    if getattr(settings, 'EMAIL_SEND', False) == True:
       recipients = [self.user.email]
       email_message = generate_password_change_email(recipients)
-      send_email(settings.EMAIL_SENDER, recipients, email_message.as_string(), settings.SMTP_SERVER, smtp_server_login=settings.EMAIL_SENDER, smtp_server_password=settings.SMTP_SERVER_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
+      send_email(settings.EMAIL_SENDER, recipients, email_message.as_string(), settings.EMAIL_HOST, smtp_server_login=settings.EMAIL_SENDER, smtp_server_password=settings.EMAIL_HOST_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
 
     return super().save()
 
@@ -451,7 +451,7 @@ class PasswordChangeForm(authForms.PasswordChangeForm):
     )
 
   def save(self, commit=True):
-    if getattr(settings, 'SEND_EMAIL', False) == True:
+    if getattr(settings, 'EMAIL_SEND', False) == True:
       self._sendPasswordChangeEmail()
     super().save(commit)
 
@@ -463,7 +463,7 @@ class PasswordChangeForm(authForms.PasswordChangeForm):
       # Silently ignore an unknown email address or inactive user
       return
 
-    if getattr(settings, 'SEND_EMAIL', False) == True:
+    if getattr(settings, 'EMAIL_SEND', False) == True:
       recipients = [email]
       email_message = generate_password_change_email(recipients)
-      send_email(settings.EMAIL_SENDER, recipients, email_message.as_string(), settings.SMTP_SERVER, smtp_server_login=settings.EMAIL_SENDER, smtp_server_password=settings.SMTP_SERVER_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
+      send_email(settings.EMAIL_SENDER, recipients, email_message.as_string(), settings.EMAIL_HOST, smtp_server_login=settings.EMAIL_SENDER, smtp_server_password=settings.EMAIL_HOST_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
