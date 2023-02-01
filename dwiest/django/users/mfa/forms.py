@@ -1,6 +1,6 @@
 from django import forms
-from django.conf import settings
 from django.core.exceptions import ValidationError
+from dwiest.django.users.conf import settings
 import base64
 from io import BytesIO
 import pyotp
@@ -33,16 +33,16 @@ class MfaEnableForm(forms.Form):
 
   def __init__(self, *args, **kwargs):
     super(forms.Form, self).__init__(*args, **kwargs)
-    if hasattr(settings, 'MFA_SECRET_KEY'):
-      self.initial['secret_key'] = settings.MFA_SECRET_KEY
+    if hasattr(settings, 'USERS_MFA_SECRET_KEY'):
+      self.initial['secret_key'] = settings.USERS_MFA_SECRET_KEY
     elif kwargs.get('data'):
       self.initial['secret_key'] = kwargs['data']['secret_key']
     else:
       self.initial['secret_key'] = pyotp.random_base32()
     self.totp = pyotp.TOTP(self.initial['secret_key'])
     self.account_name = None
-    if hasattr(settings, 'MFA_ISSUER_NAME'):
-      self.mfa_issuer_name = settings.MFA_ISSUER_NAME
+    if hasattr(settings, 'USERS_MFA_ISSUER_NAME'):
+      self.mfa_issuer_name = settings.USERS_MFA_ISSUER_NAME
     else:
       self.mfa_issuer_name = None
     self.provisioning_uri = self.totp.provisioning_uri(
@@ -51,7 +51,7 @@ class MfaEnableForm(forms.Form):
     self.secret_key_image = get_qrcode(self.provisioning_uri)
 
   def clean(self):
-    if hasattr(settings, 'MFA_ACCEPT_ANY_VALUE') and settings.MFA_ACCEPT_ANY_VALUE:
+    if hasattr(settings, 'USERS_MFA_ACCEPT_ANY_VALUE') and settings.USERS_MFA_ACCEPT_ANY_VALUE:
       print("!WARNING! MFA accepting any value")
       return super().clean()
     elif self.cleaned_data.get('token') == self.totp.now():
