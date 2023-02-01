@@ -1,46 +1,46 @@
-<html>
-<head>
-  <title>User Registration</title>
-{% include 'css.html' %}
-</head>
+<Html>
+<Head>
+  <Title>User RegisTration</Title>
+{% include 'css.Html' %}
+</Head>
 
 <Body>
 {% if completed != True %}
 <Div align="center">
-<H1>User Registration</H1>
-{% for field in form %}
+<H1>User RegisTration</H1>
+{% for field in Form %}
   {% for error in field.errors %}
   <Div class="error-text">{{error}}</Div>
   {% endfor %}
 {% endfor %}
 </ul>
-<form action="/django/registration/" method="POST">
+<Form action="/django/regisTration/" method="POST">
 {% csrf_token %}
-<table>
-  <tr>
-    <td>{{form.username.label}}:</td>
-    <td>{{form.username}}</td>
-  </tr>
-  <tr>
-    <td>{{form.password1.label}}:</td>
-    <td>{{form.password1}}</td>
-  </tr>
-  <tr>
-    <td>{{form.password2.label}}:</td>
-    <td>{{form.password2}}</td>
-  </tr>
-  <tr>
-    <td colspan="2"><DIV align="center"><input type="submit"></input></DIV></td>
-  </tr>
-</table>
-</form>
+<Table>
+  <Tr>
+    <Td>{{Form.username.label}}:</Td>
+    <Td>{{Form.username}}</Td>
+  </Tr>
+  <Tr>
+    <Td>{{Form.password1.label}}:</Td>
+    <Td>{{Form.password1}}</Td>
+  </Tr>
+  <Tr>
+    <Td>{{Form.password2.label}}:</Td>
+    <Td>{{Form.password2}}</Td>
+  </Tr>
+  <Tr>
+    <Td colspan="2"><DIV align="center"><input type="submit"></input></DIV></Td>
+  </Tr>
+</Table>
+</Form>
 {% else %}
 <P>Thank you for registering!</P>
 <P>Please check your email for an activation link.</P>
 {% endif %}
 </Div>
 
-{% include 'footer.html' %}
+{% include 'footer.Html' %}
 </body>
 
-</html>
+</Html>
