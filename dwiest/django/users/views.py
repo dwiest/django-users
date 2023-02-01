@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
@@ -8,6 +7,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 from django.views.generic import FormView, TemplateView
+from dwiest.django.users.conf import settings
 import json
 from .email import generate_account_activation_email, send_email
 from .forms import *
@@ -34,7 +34,7 @@ class RegistrationView(FormView):
     return render(request, self.template_name, self.response_dict)
 
   def post(self, request, *args, **kwargs):
-    form = RegistrationForm(request.POST)
+    form = RegistrationForm(data=request.POST)
     query_string = ''
     process_errors = True
 
@@ -200,7 +200,7 @@ class RegistrationResendView(TemplateView):
       request.session[self.fail_page] = True
       return HttpResponseRedirect(reverse(self.fail_page), self.response_dict)
 
-    elif getattr(settings, 'REGISTRATION_ALLOW_EMAIL_RESEND', False) != True:
+    elif getattr(settings, 'USERS_REGISTRATION_ALLOW_EMAIL_RESEND', False) != True:
       messages.error(request, 'Re-sending of registration emails is not allowed.')
       request.session[self.fail_page] = True
       return HttpResponseRedirect(reverse(self.fail_page), self.response_dict)
