@@ -71,7 +71,7 @@ class MfaEnableView(FormView, TemplateResponseMixin):
     except ObjectDoesNotExist:
       print("MFA not enabled")
 
-    form = self.form_class(data=request.POST)
+    form = self.form_class(user=request.user, data=request.POST)
     self.response_dict['form'] = form
     if form.is_valid():
       request.session['mfa_enabled'] = True
@@ -127,7 +127,7 @@ class MfaDisableView(FormView, TemplateResponseMixin):
       print("MFA is not enabled")
       return HttpResponseRedirect(reverse(status_page))
 
-    form = self.form_class(data=request.POST)
+    form = self.form_class(user=request.user, data=request.POST)
     self.response_dict['form'] = form
     if form.is_valid():
       print("Deleting MFA record")
