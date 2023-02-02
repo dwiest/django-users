@@ -45,13 +45,14 @@ Enter the code from your authenticator app in the field below and press the butt
 <Form method="POST" action="{% url 'mfa_enable' %}">
 {% csrf_token %}
 {{form.secret_key}}
-{{form.token}} <Input type="submit" value="Enable MFA"/>
+{{form.password.label}}: {{form.password}}
+{{form.token.label}}: {{form.token}} <Input type="submit" value="Enable MFA"/>
 </Form>
 
 {% if form.non_field_errors %}
 <P>
   {% for item in form.non_field_errors %}
-    <Div class="error-text">{{item}}</Div><Br>
+    <Div class="error-text">{{item}}</Div>
   {% endfor %}
 </P>
 {% endif %}

@@ -32,8 +32,9 @@ To disable multi-factor authentication for your account please type the text sho
 
 <Form method="POST" action="{% url 'mfa_disable' %}">
 {% csrf_token %}
-{{form.disable_mfa}}
-<Input type="submit" value="Disable MFA"/>
+<P>{{form.disable_mfa.label}}: {{form.disable_mfa}}</P>
+<P>{{form.password.label}}: {{form.password}}
+<Input type="submit" value="Disable MFA"/><P/>
 </Form>
 
 {% if form.non_field_errors %}
@@ -48,4 +49,4 @@ To disable multi-factor authentication for your account please type the text sho
 {% include 'footer.html' %}
 </body>
 
-</html>
+<html>
