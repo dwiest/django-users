@@ -1,0 +1,1 @@
+Multi-factor authentication has been disabled for your account.  If you would like to re-enable it visit https://wiest.world{% url 'mfa_enable' %}
