@@ -27,6 +27,16 @@ class UsersAppConf(AppConf):
   REGISTRATION_EMAIL_HTML = 'email/registration_email.html'
   REGISTRATION_EMAIL_TEXT = 'email/registration_email.txt'
 
+  ''' MFA disabled/enabled email settings '''
+
+  MFA_DISABLED_EMAIL_SUBJECT = 'Multi-Factor Authentication Disabled'
+  MFA_DISABLED_EMAIL_HTML = 'email/mfa_disabled.html'
+  MFA_DISABLED_EMAIL_TEXT = 'email/mfa_disabled.txt'
+
+  MFA_ENABLED_EMAIL_SUBJECT = 'Multi-Factor Authentication Enabled'
+  MFA_ENABLED_EMAIL_HTML = 'email/mfa_enabled.html'
+  MFA_ENABLED_EMAIL_TEXT = 'email/mfa_enabled.txt'
+
   '''
     Activation id settings:
 
