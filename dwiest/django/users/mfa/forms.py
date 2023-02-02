@@ -1,6 +1,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from dwiest.django.users.conf import settings
+from dwiest.django.users.email import generate_mfa_disabled_email, generate_mfa_enabled_email, send_email
 from django.utils.translation import gettext as _
 import base64
 from io import BytesIO
@@ -46,11 +47,10 @@ class MfaEnableForm(forms.Form):
   def __init__(self, user=None, *args, **kwargs):
     super(forms.Form, self).__init__(*args, **kwargs)
 
-    if hasattr(settings, 'USERS_MFA_SECRET_KEY'):
-      self.initial['secret_key'] = settings.USERS_MFA_SECRET_KEY
-
     self.user = user
 
+    if getattr(settings, 'USERS_MFA_SECRET_KEY', None) != None:
+      self.initial['secret_key'] = settings.USERS_MFA_SECRET_KEY
     elif kwargs.get('data'):
       self.initial['secret_key'] = kwargs['data']['secret_key']
     else:
@@ -88,6 +88,13 @@ class MfaEnableForm(forms.Form):
       self.error_messages['invalid_password'],
       code='invalid_password',
     )
+
+  def save(self):
+    if getattr(settings, 'EMAIL_SEND', False) == True:
+      recipients = [self.user.username]
+      email_message = generate_mfa_enabled_email(recipients)
+      send_email(settings.DEFAULT_FROM_EMAIL, recipients, email_message.as_string(), settings.EMAIL_HOST, smtp_server_login=settings.EMAIL_HOST_USER, smtp_server_password=settings.EMAIL_HOST_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
+
 
     
 
@@ -143,3 +150,9 @@ class MfaDisableForm(forms.Form):
       self.error_messages['invalid_password'],
       code='invalid_password',
     )
+
+  def save(self):
+    if getattr(settings, 'EMAIL_SEND', False) == True:
+      recipients = [self.user.username]
+      email_message = generate_mfa_disabled_email(recipients)
+      send_email(settings.DEFAULT_FROM_EMAIL, recipients, email_message.as_string(), settings.EMAIL_HOST, smtp_server_login=settings.EMAIL_HOST_USER, smtp_server_password=settings.EMAIL_HOST_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
