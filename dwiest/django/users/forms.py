@@ -8,8 +8,8 @@ from django.contrib.auth import forms as authForms
 from django.utils.translation import ugettext, ugettext_lazy as _
 from .conf import settings
 import uuid
+from .mfa import MfaModel, NonstickyTextInput
 from .models import ActivationId
-from dwiest.django.users.mfa import MfaModel, NonstickyTextInput
 import pyotp
 import pytz
 
