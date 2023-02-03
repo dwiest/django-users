@@ -6,10 +6,9 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django import forms
 from django.contrib.auth import forms as authForms
 from django.utils.translation import ugettext, ugettext_lazy as _
-from dwiest.django.users.conf import settings
+from .conf import settings
 import uuid
 from .models import ActivationId
-from .email import generate_account_activation_email, generate_password_change_email, generate_password_reset_email, generate_registration_email, send_email
 from dwiest.django.users.mfa import MfaModel, NonstickyTextInput
 import pyotp
 import pytz
@@ -19,7 +18,6 @@ class RegistrationForm(UserCreationForm):
   UserCreationForm.base_fields['password2'].label = 'Confirm password'
 
   username = forms.EmailField(label='Email',initial='',max_length=50)
-  activation_id = None
 
   UserCreationForm.error_messages.update({
     'user_already_activated':
@@ -28,13 +26,14 @@ class RegistrationForm(UserCreationForm):
       _("That email address has already been registered."),
     })
 
-  def clean_username(self):
+  def clean(self):
     username = self.cleaned_data['username']
+
     try:
       # save a reference to the user, used in save()
       self.user = User.objects.get(username=username)
 
-      # activation_id _should_ exist, but maybe not?
+      # activation_id should not exist, but maybe it does?
       try:
         self.activation_id = ActivationId.objects.get(user_id=self.user.id)
       except ObjectDoesNotExist:
@@ -52,18 +51,8 @@ class RegistrationForm(UserCreationForm):
             self.error_messages['user_already_exists'],
             code='user_already_exists',)
 
-    except ObjectDoesNotExist:
+    except ObjectDoesNotExist: # new user
       pass
-
-    return username
-
-  # override BaseModelForm.clean() since it checks for uniqueness
-  def clean(self):
-    if getattr(settings, 'USERS_REGISTRATION_ALLOW_ALREADY_ACTIVE', False) == True:
-      print("!WARNING! allowing pre-existing user")
-      pass
-    else:
-      super().clean()
 
   def save(self):
     username = self.cleaned_data.get('username')
@@ -93,13 +82,7 @@ class RegistrationForm(UserCreationForm):
       activation_id = ActivationId(value=uuid.uuid4(), user_id=self.user.id)
 
     activation_id.save()
-
-    # send a registration email
-    if getattr(settings, 'EMAIL_SEND', False) == True:
-      recipients = [self.user.username]
-      email_message = generate_registration_email(recipients, activation_id.value)
-      send_email(settings.DEFAULT_FROM_EMAIL, recipients, email_message.as_string(), settings.EMAIL_HOST, smtp_server_login=settings.EMAIL_HOST_USER, smtp_server_password=settings.EMAIL_HOST_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
-    #super().save() #doesn't allow duplicate email?
+    self.activation_id = activation_id
 
 
 class RegistrationConfirmForm(forms.Form):
@@ -172,11 +155,6 @@ class RegistrationConfirmForm(forms.Form):
     else:
       self.activation_id.delete()
 
-    if getattr(settings, 'EMAIL_SEND', False) == True:
-      recipients = [self.user.email]
-      email_message = generate_account_activation_email(recipients)
-      send_email(settings.DEFAULT_FROM_EMAIL, recipients, email_message.as_string(), settings.EMAIL_HOST, smtp_server_login=settings.EMAIL_HOST_USER, smtp_server_password=settings.EMAIL_HOST_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
-
 
 class RegistrationResendForm(forms.Form):
 
@@ -242,12 +220,6 @@ class RegistrationResendForm(forms.Form):
 
     self.activation_id.save()
 
-    # Send the registration email
-    if getattr(settings, 'EMAIL_SEND', True) == True:
-      recipients = [self.user.email]
-      email_message = generate_registration_email(recipients, self.activation_id.value)
-      send_email(settings.DEFAULT_FROM_EMAIL, recipients, email_message.as_string(), settings.EMAIL_HOST, smtp_server_login=settings.EMAIL_HOST_USER, smtp_server_password=settings.EMAIL_HOST_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
-
 
 class SendPasswordResetForm(forms.Form):
   email = forms.EmailField(label='Email',initial='',max_length=50)
@@ -256,6 +228,7 @@ class SendPasswordResetForm(forms.Form):
     email = self.cleaned_data.get('email')
     try:
       user = User.objects.get(username=email, is_active=True)
+      self.user = user
     except ObjectDoesNotExist:
       # Silently ignore an unknown email address or inactive user
       return
@@ -272,11 +245,7 @@ class SendPasswordResetForm(forms.Form):
       # No record found, create a new one
       activation_id = ActivationId(user_id=user.id, value=uuid.uuid4())
     activation_id.save()
-
-    if getattr(settings, 'EMAIL_SEND', False) == True:
-      recipients = [email]
-      email_message = generate_password_reset_email(recipients, activation_id.value)
-      send_email(settings.DEFAULT_FROM_EMAIL, recipients, email_message.as_string(), settings.EMAIL_HOST, smtp_server_login=settings.EMAIL_HOST_USER, smtp_server_password=settings.EMAIL_HOST_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
+    self.activation_id = activation_id
 
 
 class PasswordResetConfirmForm(authForms.PasswordChangeForm):
@@ -381,12 +350,6 @@ class PasswordResetConfirmForm(authForms.PasswordChangeForm):
     else:
       self.activation_id.delete()
 
-    # Send a password change email
-    if getattr(settings, 'EMAIL_SEND', False) == True:
-      recipients = [self.user.email]
-      email_message = generate_password_change_email(recipients)
-      send_email(settings.DEFAULT_FROM_EMAIL, recipients, email_message.as_string(), settings.EMAIL_HOST, smtp_server_login=settings.EMAIL_HOST_USER, smtp_server_password=settings.EMAIL_HOST_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
-
     return super().save()
 
 
@@ -452,11 +415,6 @@ class PasswordChangeForm(authForms.PasswordChangeForm):
       code='replayed_mfa_token',
     )
 
-  def save(self, commit=True):
-    if getattr(settings, 'EMAIL_SEND', False) == True:
-      self._sendPasswordChangeEmail()
-    super().save(commit)
-
   def _sendPasswordChangeEmail(self):
     email = self.user.email
     try:
@@ -464,8 +422,3 @@ class PasswordChangeForm(authForms.PasswordChangeForm):
     except ObjectDoesNotExist:
       # Silently ignore an unknown email address or inactive user
       return
-
-    if getattr(settings, 'EMAIL_SEND', False) == True:
-      recipients = [email]
-      email_message = generate_password_change_email(recipients)
-      send_email(settings.DEFAULT_FROM_EMAIL, recipients, email_message.as_string(), settings.EMAIL_HOST, smtp_server_login=settings.EMAIL_HOST_USER, smtp_server_password=settings.EMAIL_HOST_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
