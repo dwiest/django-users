@@ -5,6 +5,7 @@ class UsersAppConf(AppConf):
 
   def ready(self):
     from .mfa import signals
+    from . import signals
 
   ''' Account activation email settings '''
 
