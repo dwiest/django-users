@@ -58,10 +58,7 @@ class MfaEnableForm(forms.Form):
     self.totp = pyotp.TOTP(self.initial['secret_key'])
     self.account_name = None
 
-    if hasattr(settings, 'USERS_MFA_ISSUER_NAME'):
-      self.mfa_issuer_name = settings.USERS_MFA_ISSUER_NAME
-    else:
-      self.mfa_issuer_name = None
+    self.mfa_issuer_name = getattr(settings, 'USERS_MFA_ISSUER_NAME', None)
 
     self.provisioning_uri = self.totp.provisioning_uri(
       name=self.account_name,
@@ -73,7 +70,7 @@ class MfaEnableForm(forms.Form):
     if self.user.check_password(self.cleaned_data.get('password')) != True:
       raise self.get_invalid_password_error()
 
-    if hasattr(settings, 'USERS_MFA_ACCEPT_ANY_VALUE') and settings.USERS_MFA_ACCEPT_ANY_VALUE:
+    if getattr(settings, 'USERS_MFA_ACCEPT_ANY_VALUE', False) == True:
       print("!WARNING! MFA accepting any value")
     elif self.cleaned_data.get('token') == self.totp.now():
       pass
