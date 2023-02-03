@@ -1,9 +1,23 @@
+from django.dispatch import receiver
 from django.shortcuts import render
 from django.template.loader import get_template
 from dwiest.django.users.conf import settings
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import smtplib
+from .mfa.signals import mfa_disabled, mfa_enabled
+
+@receiver(mfa_disabled)
+def mfa_disabled_callback(sender, **kwargs):
+  recipients = [kwargs['request'].user.email]
+  msg = generate_mfa_disabled_email(recipients)
+  send_email(settings.DEFAULT_FROM_EMAIL, recipients, msg.as_string(), settings.EMAIL_HOST, smtp_server_login=settings.EMAIL_HOST_USER, smtp_server_password=settings.EMAIL_HOST_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
+
+@receiver(mfa_enabled)
+def mfa_enabled_callback(sender, **kwargs):
+  recipients = [kwargs['request'].user.email]
+  msg = generate_mfa_enabled_email(recipients)
+  send_email(settings.DEFAULT_FROM_EMAIL, recipients, msg.as_string(), settings.EMAIL_HOST, smtp_server_login=settings.EMAIL_HOST_USER, smtp_server_password=settings.EMAIL_HOST_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
 
 def generate_registration_email(recipients, activation_id):
   subject = settings.USERS_REGISTRATION_EMAIL_SUBJECT
