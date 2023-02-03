@@ -8,6 +8,7 @@ from django.views.generic import FormView, TemplateView
 from django.views.generic.base import TemplateResponseMixin
 from .forms import MfaEnableForm, MfaDisableForm
 from .models import MfaModel
+from .signals import mfa_disabled, mfa_enabled
 
 def check_user_mfa(sender, user, request, **kwargs):
   print("checking if MFA is enabled for the user")
@@ -74,7 +75,6 @@ class MfaEnableView(FormView, TemplateResponseMixin):
     form = self.form_class(user=request.user, data=request.POST)
     self.response_dict['form'] = form
     if form.is_valid():
-      form.save()
       request.session['mfa_enabled'] = True
       request.session['user_has_mfa'] = True
       # create and store an MFA model object
@@ -82,6 +82,7 @@ class MfaEnableView(FormView, TemplateResponseMixin):
       user_id = request.user.id
       mfa_record = MfaModel(secret_key=secret_key, user_id=user_id)
       mfa_record.save()
+      mfa_enabled.send(sender=request.user.__class__, request=request)
       return HttpResponseRedirect(reverse(self.success_page))
     else:
       return render(request, self.template_name, self.response_dict)
@@ -133,9 +134,9 @@ class MfaDisableView(FormView, TemplateResponseMixin):
     if form.is_valid():
       print("Deleting MFA record")
       mfa_record.delete()
-      form.save()
       request.session['mfa_disabled'] = True
       request.session['user_has_mfa'] = False
+      mfa_disabled.send(sender=request.user.__class__, request=request)
       return HttpResponseRedirect(reverse(self.success_page))
     else:
       return render(request, self.template_name, self.response_dict)
