@@ -1,3 +1,4 @@
+from django.dispatch import receiver
 from django.dispatch import Signal
 from .email import *
 
