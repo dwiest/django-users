@@ -1,12 +1,11 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from dwiest.django.users.conf import settings
-from dwiest.django.users.email import generate_mfa_disabled_email, generate_mfa_enabled_email, send_email
 from django.utils.translation import gettext as _
 import base64
 from io import BytesIO
 import pyotp
 import qrcode
+from ..conf import settings
 
 # copied from https://stackoverflow.com/questions/43425116/clear-all-form-fields-on-validation-error-in-django
 class NonstickyTextInput(forms.TextInput):
