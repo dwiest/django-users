@@ -1,15 +1,17 @@
 from django.dispatch import receiver
 from django.shortcuts import render
 from django.template.loader import get_template
+from django.urls import reverse
 from .conf import settings
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import smtplib
 
-def generate_registration_email(recipients, activation_id):
+def generate_registration_email(recipients, domain, activation_id):
   subject = settings.USERS_REGISTRATION_EMAIL_SUBJECT
   sender = settings.DEFAULT_FROM_EMAIL
-  link = "https://wiest.world/django/registration/confirm?activation_id={}".format(activation_id)
+  query_string = '?activation_id={}'.format(activation_id)
+  link = str(domain) + reverse('registration_confirm') + query_string
   html_template = get_template(settings.USERS_REGISTRATION_EMAIL_HTML)
   text_template = get_template(settings.USERS_REGISTRATION_EMAIL_TEXT)
   html_body = html_template.render({'link':link})
@@ -41,10 +43,11 @@ def generate_account_activation_email(recipients):
   msg.attach(part2)
   return msg
 
-def generate_password_reset_email(recipients, activation_id):
+def generate_password_reset_email(recipients, domain, activation_id):
   subject = settings.USERS_PASSWORD_RESET_EMAIL_SUBJECT
   sender = settings.DEFAULT_FROM_EMAIL
-  link = "https://wiest.world/django/password/reset/confirm?activation_id={}".format(activation_id)
+  query_string = '?activation_id={}'.format(activation_id)
+  link = str(domain) + reverse('password_reset_confirm') + query_string
   html_template = get_template(settings.USERS_PASSWORD_RESET_EMAIL_HTML)
   text_template = get_template(settings.USERS_PASSWORD_RESET_EMAIL_TEXT)
   html_body = html_template.render({'link':link})
