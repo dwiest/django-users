@@ -7,11 +7,11 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 from django.views.generic import FormView, TemplateView
-from dwiest.django.users.conf import settings
 import json
-from .email import generate_account_activation_email, send_email
+from .conf import settings
 from .forms import *
 from .models import ActivationId
+from .signals import *
 
 login_page = 'login'
 status_page = 'home'
@@ -41,6 +41,7 @@ class RegistrationView(FormView):
     if form.is_valid():
       form.save()
       request.session['registration_success'] = True
+      user_registration.send(sender=request.user.__class__, email=form.user.email, activation_id=form.activation_id.value)
       return HttpResponseRedirect(reverse(self.success_page), self.response_dict)
     else:
       form_errors = json.loads(form.errors.as_json()) # as_data() ddoesn't include the code
@@ -126,6 +127,7 @@ class RegistrationConfirmView(TemplateView):
     if form.is_valid():
       form.save()
       request.session['registration_confirm_success'] = True
+      user_registration_confirmed.send(sender=request.user.__class__, email=form.user.email)
       return HttpResponseRedirect(reverse(self.success_page), self.response_dict)
     else:
       form_errors = json.loads(form.errors.as_json()) # as_data() ddoesn't include the code
@@ -209,6 +211,7 @@ class RegistrationResendView(TemplateView):
     if form.is_valid():
       form.save()
       request.session[self.success_page] = True
+      resend_registration_email.send(sender=request.user.__class__, email=form.user.email, activation_id=form.activation_id.value)
       return HttpResponseRedirect(reverse(self.success_page), self.response_dict)
     else:
       for field, errors in form.errors.as_data().items():
@@ -242,6 +245,7 @@ class SendPasswordResetView(TemplateView):
     if form.is_valid():
       form.sendPasswordResetEmail()
       request.session['password_reset'] = True
+      password_reset_request.send(sender=request.user.__class__, email=form.user.email, activation_id=form.activation_id)
       return HttpResponseRedirect(reverse(self.success_page))
     else:
       return render(request, self.template_name, self.response_dict)
@@ -297,6 +301,7 @@ class PasswordResetConfirmView(TemplateView):
       update_session_auth_hash(request, request.user)
       request.session['password_reset_confirm'] = True
       form.save()
+      password_changed.send(sender=request.user.__class__, email=form.user.email)
       return HttpResponseRedirect(reverse(self.success_page))
     else:
       # Don't allow form re-submission for activation id issues
@@ -347,6 +352,7 @@ class PasswordChangeView(LoginRequiredMixin, TemplateView):
   form_class = PasswordChangeForm
   page_name = 'Change Password'
   template_name = "password_change.html"
+  success_page = 'change_password_success'
 
   def __init__(self, *args, **kwargs):
     self.response_dict = {
@@ -366,7 +372,8 @@ class PasswordChangeView(LoginRequiredMixin, TemplateView):
       # prevent the user from being logged out after a password change
       update_session_auth_hash(request, request.user)
       request.session['password_changed'] = True
-      return HttpResponseRedirect(reverse('change_password_success'))
+      password_changed.send(sender=request.user.__class__, email=request.user.email)
+      return HttpResponseRedirect(reverse(self.success_page))
     else:
       return render(request, self.template_name, self.response_dict)
 
