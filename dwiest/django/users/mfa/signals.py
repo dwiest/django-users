@@ -1,5 +1,7 @@
 from django.dispatch import Signal
-from ..email import *
+from django.dispatch import receiver
+from .email import *
+from ..email import send_email
 
 mfa_enabled = Signal()
 mfa_disabled = Signal()
