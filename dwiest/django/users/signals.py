@@ -11,9 +11,11 @@ password_changed = Signal()
 def user_registration_callback(sender, **kwargs):
   print("user_registration_callback")
   if getattr(settings, 'EMAIL_SEND', False) == True:
+    request = kwargs['request']
+    domain = 'https://' + request.META['HTTP_HOST']
     recipients = [kwargs['email']]
     activation_id = kwargs['activation_id']
-    msg = generate_registration_email(recipients, activation_id)
+    msg = generate_registration_email(recipients, domain, activation_id.value)
     send_email(recipients, msg.as_string())
 
 @receiver(user_registration_confirmed)
@@ -28,18 +30,22 @@ def user_registration_confirmed_callback(sender, **kwargs):
 def resend_registration_email_callback(sender, **kwargs):
   print("resend_registration_email_callback")
   if getattr(settings, 'EMAIL_SEND', False) == True:
+    request = kwargs['request']
+    domain = 'https://' + request.META['HTTP_HOST']
     recipients = [kwargs['email']]
     activation_id = kwargs['activation_id']
-    msg = generate_registration_email(recipients, activation_id)
+    msg = generate_registration_email(recipients, domain, activation_id.value)
     send_email(recipients, msg.as_string())
 
 @receiver(password_reset_request)
 def password_reset_callback(sender, **kwargs):
   print("password_reset_callback")
   if getattr(settings, 'EMAIL_SEND', False) == True:
+    request = kwargs['request']
+    domain = 'https://' + request.META['HTTP_HOST']
     recipients = [kwargs['email']]
     activation_id = kwargs['activation_id']
-    msg = generate_password_reset_email(recipients, activation_id)
+    msg = generate_password_reset_email(recipients, domain, activation_id.value)
     send_email(recipients, msg.as_string())
 
 @receiver(password_changed)
