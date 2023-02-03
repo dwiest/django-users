@@ -2,8 +2,8 @@ from django.contrib.auth import forms
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.forms import CharField
 from django.utils.translation import gettext, gettext_lazy as _
-from dwiest.django.users.mfa import MfaModel, NonstickyTextInput
-from dwiest.django.users.conf import settings
+from ..users.mfa import MfaModel, NonstickyTextInput
+from ..users.conf import settings
 import pyotp
 
 class AuthenticationForm(forms.AuthenticationForm):

@@ -1,7 +1,7 @@
 from django.contrib.auth import views
-from dwiest.django.users import views as myViews
+from ..users import views as myViews
 from .forms import AuthenticationForm
-from dwiest.django.users.forms import PasswordChangeForm
+from ..users.forms import PasswordChangeForm
 
 class LoginView(views.LoginView):
   form_class = AuthenticationForm
