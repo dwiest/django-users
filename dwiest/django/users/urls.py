@@ -16,8 +16,8 @@ from django.contrib import admin
 from django.contrib.auth.views import LogoutView
 from django.urls import path, include
 import dwiest.django.users.mfa
-from dwiest.django.auth.views import LoginView, PasswordChangeView
-from dwiest.django.users.conf import settings
+from ..auth.views import LoginView, PasswordChangeView
+from .conf import settings
 from .views import *
 
 urlpatterns = [
