@@ -224,14 +224,19 @@ class RegistrationResendForm(forms.Form):
 class SendPasswordResetForm(forms.Form):
   email = forms.EmailField(label='Email',initial='',max_length=50)
 
-  def sendPasswordResetEmail(self):
+  error_messages = {
+    'user_not_found':
+      _("A user with that email address could not be located."),
+    }
+
+  def clean(self):
     email = self.cleaned_data.get('email')
     try:
       user = User.objects.get(username=email, is_active=True)
       self.user = user
     except ObjectDoesNotExist:
       # Silently ignore an unknown email address or inactive user
-      return
+      raise self.get_invalid_user_error()
 
     # Re-use an activation id record it exists; don't allows multiple per-user
     try:
@@ -244,8 +249,16 @@ class SendPasswordResetForm(forms.Form):
     except ObjectDoesNotExist:
       # No record found, create a new one
       activation_id = ActivationId(user_id=user.id, value=uuid.uuid4())
+
     activation_id.save()
     self.activation_id = activation_id
+
+  def get_invalid_user_error (self):
+    return ValidationError(
+      self.error_messages['user_not_found'],
+      code='user_not_found',
+    )
+
 
 
 class PasswordResetConfirmForm(authForms.PasswordChangeForm):
