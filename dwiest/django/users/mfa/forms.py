@@ -89,14 +89,6 @@ class MfaEnableForm(forms.Form):
       code='invalid_password',
     )
 
-  def save(self):
-    if getattr(settings, 'EMAIL_SEND', False) == True:
-      recipients = [self.user.username]
-      email_message = generate_mfa_enabled_email(recipients)
-      send_email(settings.DEFAULT_FROM_EMAIL, recipients, email_message.as_string(), settings.EMAIL_HOST, smtp_server_login=settings.EMAIL_HOST_USER, smtp_server_password=settings.EMAIL_HOST_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
-
-
-    
 
 def get_qrcode(text):
   qr = qrcode.QRCode(
@@ -150,9 +142,3 @@ class MfaDisableForm(forms.Form):
       self.error_messages['invalid_password'],
       code='invalid_password',
     )
-
-  def save(self):
-    if getattr(settings, 'EMAIL_SEND', False) == True:
-      recipients = [self.user.username]
-      email_message = generate_mfa_disabled_email(recipients)
-      send_email(settings.DEFAULT_FROM_EMAIL, recipients, email_message.as_string(), settings.EMAIL_HOST, smtp_server_login=settings.EMAIL_HOST_USER, smtp_server_password=settings.EMAIL_HOST_PASSWORD, proxy_server=settings.PROXY_SERVER, proxy_port=settings.PROXY_PORT)
