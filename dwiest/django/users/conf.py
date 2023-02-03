@@ -3,6 +3,9 @@ from appconf import AppConf
 
 class UsersAppConf(AppConf):
 
+  def ready(self):
+    from .mfa import signals
+
   ''' Account activation email settings '''
 
   ACCOUNT_ACTIVATION_EMAIL_SUBJECT = 'Account Activated'
