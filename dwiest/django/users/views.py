@@ -41,7 +41,7 @@ class RegistrationView(FormView):
     if form.is_valid():
       form.save()
       request.session['registration_success'] = True
-      user_registration.send(sender=request.user.__class__, request=request, email=form.user.email, activation_id=form.activation_id.value)
+      user_registration.send(sender=request.user.__class__, request=request, email=form.user.email, activation_id=form.activation_id)
       return HttpResponseRedirect(reverse(self.success_page), self.response_dict)
     else:
       form_errors = json.loads(form.errors.as_json()) # as_data() ddoesn't include the code
@@ -211,7 +211,7 @@ class RegistrationResendView(TemplateView):
     if form.is_valid():
       form.save()
       request.session[self.success_page] = True
-      resend_registration_email.send(sender=request.user.__class__, request=request, email=form.user.email, activation_id=form.activation_id.value)
+      resend_registration_email.send(sender=request.user.__class__, request=request, email=form.user.email, activation_id=form.activation_id)
       return HttpResponseRedirect(reverse(self.success_page), self.response_dict)
     else:
       for field, errors in form.errors.as_data().items():
