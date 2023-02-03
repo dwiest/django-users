@@ -12,7 +12,28 @@
   color: #ffffff;
   background-color: #ff0000
   }
+.show{
+  color: #000000;
+  background-color: #ffffff
+  }
+.hide{
+  color: #ffffff;
+  background-color: #ffffff
+  }
   </Style>
+  <Script>
+  function toggler(e) {
+  if( e.innerHTML == 'Show' ) {
+      e.innerHTML = 'Hide'
+      document.getElementById('secret_key').type="text";
+      document.getElementById('secret_key').className="show";
+  } else {
+      e.innerHTML = 'Show'
+      document.getElementById('secret_key').type="password";
+      document.getElementById('secret_key').className="hide";
+  }
+}
+  </Script>
 </Head>
 
 <Body>
@@ -30,7 +51,8 @@
 {% endif %}
 
 <P>
-Secret Key: {{form.secret_key.value}}
+Secret Key: <Input id="secret_key" type="text" size="36" class="hide" value="{{form.secret_key.value}}"/>
+<button onclick="toggler(this)" type="button">Show</button>
 </P>
 
 <P>
