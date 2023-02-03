@@ -226,6 +226,7 @@ class SendPasswordResetView(TemplateView):
   page_name = 'Password Reset'
   template_name = 'send_password_reset.html'
   success_page = 'password_reset_success'
+  fail_page = 'password_reset_failed'
   form_class = SendPasswordResetForm
 
   def __init__(self, *args, **kwargs):
@@ -243,12 +244,16 @@ class SendPasswordResetView(TemplateView):
     self.response_dict['form'] = form
 
     if form.is_valid():
-      form.sendPasswordResetEmail()
       request.session['password_reset'] = True
       password_reset_request.send(sender=request.user.__class__, email=form.user.email, activation_id=form.activation_id)
       return HttpResponseRedirect(reverse(self.success_page))
     else:
-      return render(request, self.template_name, self.response_dict)
+      form_errors = json.loads(form.errors.as_json()) # as_data() ddoesn't include the code
+      for field, errors in form_errors.items():
+        for error in errors:
+          messages.error(request, error['message'])
+      request.session['password_reset_failed'] = True
+      return HttpResponseRedirect(reverse(self.fail_page))
 
 
 class SendPasswordResetSuccessView(TemplateView):
