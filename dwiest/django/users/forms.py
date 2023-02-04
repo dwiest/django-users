@@ -235,7 +235,6 @@ class SendPasswordResetForm(forms.Form):
       user = User.objects.get(username=email, is_active=True)
       self.user = user
     except ObjectDoesNotExist:
-      # Silently ignore an unknown email address or inactive user
       raise self.get_invalid_user_error()
 
     # Re-use an activation id record it exists; don't allows multiple per-user
