@@ -260,7 +260,6 @@ class SendPasswordResetForm(forms.Form):
     )
 
 
-
 class PasswordResetConfirmForm(authForms.PasswordChangeForm):
 
   activation_id = forms.CharField(
@@ -427,11 +426,3 @@ class PasswordChangeForm(authForms.PasswordChangeForm):
       self.error_messages['replayed_mfa_token'],
       code='replayed_mfa_token',
     )
-
-  def _sendPasswordChangeEmail(self):
-    email = self.user.email
-    try:
-      User.objects.get(username=email, is_active=True)
-    except ObjectDoesNotExist:
-      # Silently ignore an unknown email address or inactive user
-      return
