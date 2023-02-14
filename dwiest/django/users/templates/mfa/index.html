@@ -1,7 +1,9 @@
 <html>
 <head>
   <title>{{page_name}}</title>
-  {% include 'css.html' %}
+{% include 'css.html' %}
+{% include 'django-messages-css.html' %}
+{% include 'footer-css.html' %}
 </head>
 
 <body>
@@ -11,7 +13,7 @@
 {% endwith %}
 {% endblock %}
 
-<Div align="center">
+<Div class="content">
 {% if user_has_mfa %}
 <H2>Multi-Factor is Enabled</H2>
 <P>
@@ -29,7 +31,7 @@ Click <A href="{%url 'mfa_enable'%}">here</A> to enable it.
 {% endif %}
 </Div>
 
-{% include 'footer.html' %}
+<Div class="footer">{% include 'footer.html' %}</Div>
 </body>
 
 </html>

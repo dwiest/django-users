@@ -2,6 +2,8 @@
 <Head>
   <Title>{{page_name}}</Title>
 {% include 'css.html' %}
+{% include 'django-messages-css.html' %}
+{% include 'footer-css.html' %}
 </Head>
 
 <Body>
@@ -11,10 +13,10 @@
 {% endwith %}
 {% endblock %}
 
-<Div align="center">
+<Div class="content">
 <H2>Sorry!</H2>
 {% for message in messages %}
- <Div class="error-text">{{message}}</Div>
+ <Div class="error">{{message}}</Div>
 {% endfor %}
 <P>
 Your account activation request has failed.  Please contact support for further assistance.
@@ -26,7 +28,7 @@ Click <A href="{% url 'registration_resend' %}?activation_id={{request.GET.activ
 </P>
 {% endif %}
 </Div>
-{% include 'footer.html' %}
+<Div class="footer">{% include 'footer.html' %}</Div>
 </Body>
 
 </Html>

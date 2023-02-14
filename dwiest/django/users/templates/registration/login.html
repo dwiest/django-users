@@ -2,20 +2,23 @@
 <Head>
   <Title>Login</Title>
 {% include 'css.html' %}
+{% include 'django-messages-css.html' %}
+{% include 'footer-css.html' %}
 </Head>
 
 <Body>
-<Div align="center"><H1>Login</H1>
+<Div class="content">
+<H1>Login</H1>
 
 {% for error in form.non_field_errors %}
-<Div class="error-text">{{error}}</Div>
+<Div class="error">{{error}}</Div>
 <P>If you have forgotten your password, please click <A href="{% url 'password_reset' %}">here</A>.
 {% endfor %}
 
 <P>
 <Form action="{{form.template_url}}" method="POST">
 {% csrf_token %}
-<Table>
+<Table align="center">
   <Tr>
     <Td>Email:</Td>
     <Td>{{form.username}}</Td>
@@ -37,7 +40,7 @@
 </P>
 <P>Need an account? Register <A href="{% url 'registration' %}">here</A>.</P>
 </Div>
-{% include 'footer.html' %}
+<Div class="footer">{% include 'footer.html' %}</Div>
 </Body>
 
 </Html>

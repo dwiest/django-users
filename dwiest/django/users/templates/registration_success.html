@@ -2,6 +2,8 @@
 <Head>
   <Title>{{page_name}}</Title>
 {% include 'css.html' %}
+{% include 'django-messages-css.html' %}
+{% include 'footer-css.html' %}
 </Head>
 
 <Body>
@@ -11,11 +13,10 @@
 {% endwith %}
 {% endblock %}
 
-<Div align="center">
+<Div class="content">
 <H2>Thank you!</H2>
 <P>Thank you for registering! Please check your email for an activation link.</P>
 </Div>
-{% include 'footer.html' %}
+<Div class="footer">{% include 'footer.html' %}</Div>
 </Body>
-
 </Html>

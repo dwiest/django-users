@@ -1,17 +1,10 @@
 <Html>
 <Head>
   <Title>{{page_name}}</Title>
+{% include 'css.html' %}
+{% include 'django-messages-css.html' %}
+{% include 'footer-css.html' %}
   <Style>
-.container {
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
-  width: 100%;
-  }
-.error-text{
-  color: #ffffff;
-  background-color: #ff0000
-  }
 .show{
   color: #000000;
   background-color: #ffffff
@@ -43,7 +36,7 @@
 {% endwith %}
 {% endblock %}
 
-<Div align="center">
+<Div class="content">
 {% if form.secret_key_image %}
 <P>
 <Img src="data:image/png;base64,{{form.secret_key_image}}"/>
@@ -74,7 +67,7 @@ Enter the code from your authenticator app in the field below and press the butt
 {% if form.non_field_errors %}
 <P>
   {% for item in form.non_field_errors %}
-    <Div class="error-text">{{item}}</Div>
+    <Div class="error">{{item}}</Div>
   {% endfor %}
 </P>
 {% endif %}
@@ -105,7 +98,7 @@ Chrome based browser plugin:
 <A href="https://microsoftedge.microsoft.com/addons/detail/authenticator-2fa-client/ocglkepbibnalbgmbachknglpdipeoio">Authenticator: 2FA Client</A>
 </P>
 
-{% include 'footer.html' %}
+<Div class="footer">{% include 'footer.html' %}</Div>
 </body>
 
 </html>

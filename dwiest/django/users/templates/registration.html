@@ -2,21 +2,23 @@
 <Head>
   <Title>User RegisTration</Title>
 {% include 'css.html' %}
+{% include 'django-messages-css.html' %}
+{% include 'footer-css.html' %}
 </Head>
 
 <Body>
 {% if completed != True %}
-<Div align="center">
+<Div class="content">
 <H1>User Registration</H1>
 {% for field in form %}
   {% for error in field.errors %}
-  <Div class="error-text">{{error}}</Div>
+  <Div class="error">{{error}}</Div>
   {% endfor %}
 {% endfor %}
 </ul>
 <Form action="/django/registration/" method="POST">
 {% csrf_token %}
-<Table>
+<Table align="center">
   <Tr>
     <Td>{{form.username.label}}:</Td>
     <Td>{{form.username}}</Td>
@@ -40,7 +42,7 @@
 {% endif %}
 </Div>
 
-{% include 'footer.html' %}
+<Div class="fotoer">{% include 'footer.html' %}</Div>
 </body>
 
 </Html>

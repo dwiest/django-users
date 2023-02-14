@@ -1,18 +1,9 @@
 <Html>
 <Head>
   <Title>{{page_name}}</Title>
-  <Style>
-.container {
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
-  width: 100%;
-  }
-.error-text{
-  color: #ffffff;
-  background-color: #ff0000
-  }
-  </Style>
+{% include 'css.html' %}
+{% include 'django-messages-css.html' %}
+{% include 'footer-css.html' %}
 </Head>
 
 <Body>
@@ -22,7 +13,7 @@
 {% endwith %}
 {% endblock %}
 
-<Div align="center">
+<Div class="content">
 <P>
 To disable multi-factor authentication for your account please type the text shown below and press the 'Disable MFA' button.
 </P>
@@ -46,7 +37,7 @@ To disable multi-factor authentication for your account please type the text sho
 {% endif %}
 </Div>
 
-{% include 'footer.html' %}
+<Div class="footer">{% include 'footer.html' %}</Div>
 </body>
 
 <html>

@@ -1,14 +1,9 @@
 <Html>
 <Head>
   <Title>Multi-Factor Authentication Disabled</Title>
-  <Style>
-.container {
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
-  width: 100%;
-  }
-  </Style>
+{% include 'css.html' %}
+{% include 'django-messages-css.html' %}
+{% include 'footer-css.html' %}
 </Head>
 
 <Body>
@@ -18,7 +13,7 @@
 {% endwith %}
 {% endblock %}
 
-<Div align="center">
+<Div class="content">
 <H2>Success!</H2>
 <P>
 Multi-factor authentication was successfully disabled for your account.<Br>
@@ -29,7 +24,7 @@ If you would like to re-enable multi-factor authentiction you may do so <A href=
 </P>
 </Div>
 
-{% include 'footer.html' %}
+<Div class="footer">{% include 'footer.html' %}</Div>
 </body>
 
 </html>
