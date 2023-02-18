@@ -1,16 +1,16 @@
 <html>
 <head>
   <title>{{page_name}}</title>
-{% include 'css.html' %}
-{% include 'django-messages-css.html' %}
-{% include 'footer-css.html' %}
+{% include 'dwiest-django-users/css.html' %}
+{% include 'dwiest-django-users/django-messages-css.html' %}
+{% include 'dwiest-django-users/footer-css.html' %}
   <Meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </head>
 
 <body>
 {% block header %}
 {% with title=page_name %}
-{% include 'header.html' %}
+{% include 'dwiest-django-users/header.html' %}
 {% endwith %}
 {% endblock %}
 
@@ -32,7 +32,7 @@ Click <A href="{%url 'mfa_enable'%}">here</A> to enable it.
 {% endif %}
 </Div>
 
-<Div class="footer">{% include 'footer.html' %}</Div>
+<Div class="footer">{% include 'dwiest-django-users/footer.html' %}</Div>
 </body>
 
 </html>

@@ -26,7 +26,7 @@ status_page = 'mfa_status'
 
 class MfaStatusView(FormView, TemplateResponseMixin):
   page_name = 'Multi-Factor Authentication'
-  template_name = 'mfa/index.html'
+  template_name = 'dwiest-django-users/mfa/index.html'
 
   def __init__(self, *args, **kwargs):
     self.response_dict = {
@@ -42,7 +42,7 @@ class MfaStatusView(FormView, TemplateResponseMixin):
 class MfaEnableView(FormView, TemplateResponseMixin):
   form_class = MfaEnableForm
   page_name = 'Enable Multi-Factor Authentication'
-  template_name = 'mfa/enable.html'
+  template_name = 'dwiest-django-users/mfa/enable.html'
   success_page = 'mfa_enable_success'
 
   def __init__(self, *args, **kwargs):
@@ -89,7 +89,7 @@ class MfaEnableView(FormView, TemplateResponseMixin):
 
 class MfaEnableSuccessView(TemplateView):
   page_name = 'Multi-Factor Authentication Enabled'
-  template_name = 'mfa/enable_success.html'
+  template_name = 'dwiest-django-users/mfa/enable_success.html'
 
   def get(self, request, *args, **kwargs):
     if 'mfa_enabled' in request.session:
@@ -101,7 +101,7 @@ class MfaEnableSuccessView(TemplateView):
 class MfaDisableView(FormView, TemplateResponseMixin):
   form_class = MfaDisableForm
   page_name = 'Disable Multi-Factor Authentication'
-  template_name = 'mfa/disable.html'
+  template_name = 'dwiest-django-users/mfa/disable.html'
   success_page = 'mfa_disable_success'
 
   def __init__(self, *args, **kwargs):
@@ -143,7 +143,7 @@ class MfaDisableView(FormView, TemplateResponseMixin):
 
 class MfaDisableSuccessView(TemplateView):
   page_name = 'Multi-Factor Authentication Disabled'
-  template_name = 'mfa/disable_success.html'
+  template_name = 'dwiest-django-users/mfa/disable_success.html'
 
   def get(self, request, *args, **kwargs):
     if 'mfa_disabled' in request.session:

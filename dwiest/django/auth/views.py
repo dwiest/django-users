@@ -5,6 +5,7 @@ from ..users.forms import PasswordChangeForm
 
 class LoginView(views.LoginView):
   form_class = AuthenticationForm
+  template_name = 'dwiest-django-users/registration/login.html'
 
 class PasswordChangeView(myViews.PasswordChangeView):
   form_class = PasswordChangeForm

@@ -10,36 +10,36 @@ class UsersAppConf(AppConf):
   ''' Account activation email settings '''
 
   ACCOUNT_ACTIVATION_EMAIL_SUBJECT = 'Account Activated'
-  ACCOUNT_ACTIVATION_EMAIL_HTML = 'email/account_activation.html'
-  ACCOUNT_ACTIVATION_EMAIL_TEXT = 'email/account_activation.txt'
+  ACCOUNT_ACTIVATION_EMAIL_HTML = 'dwiest-django-users/email/account_activation.html'
+  ACCOUNT_ACTIVATION_EMAIL_TEXT = 'dwiest-django-users/email/account_activation.txt'
 
   ''' Password change email settings '''
 
   PASSWORD_CHANGE_EMAIL_SUBJECT = 'Password Updated'
-  PASSWORD_CHANGE_EMAIL_HTML = 'email/password_updated.html'
-  PASSWORD_CHANGE_EMAIL_TEXT = 'email/password_updated.txt'
+  PASSWORD_CHANGE_EMAIL_HTML = 'dwiest-django-users/email/password_updated.html'
+  PASSWORD_CHANGE_EMAIL_TEXT = 'dwiest-django-users/email/password_updated.txt'
 
   ''' Password reset email settings '''
 
   PASSWORD_RESET_EMAIL_SUBJECT = 'Password Reset'
-  PASSWORD_RESET_EMAIL_HTML = 'email/password_reset.html'
-  PASSWORD_RESET_EMAIL_TEXT = 'email/password_reset.txt'
+  PASSWORD_RESET_EMAIL_HTML = 'dwiest-django-users/email/password_reset.html'
+  PASSWORD_RESET_EMAIL_TEXT = 'dwiest-django-users/email/password_reset.txt'
 
   ''' Account registration email settings '''
 
   REGISTRATION_EMAIL_SUBJECT = 'User Registration'
-  REGISTRATION_EMAIL_HTML = 'email/registration_email.html'
-  REGISTRATION_EMAIL_TEXT = 'email/registration_email.txt'
+  REGISTRATION_EMAIL_HTML = 'dwiest-django-users/email/registration_email.html'
+  REGISTRATION_EMAIL_TEXT = 'dwiest-django-users/email/registration_email.txt'
 
   ''' MFA disabled/enabled email settings '''
 
   MFA_DISABLED_EMAIL_SUBJECT = 'Multi-Factor Authentication Disabled'
-  MFA_DISABLED_EMAIL_HTML = 'email/mfa_disabled.html'
-  MFA_DISABLED_EMAIL_TEXT = 'email/mfa_disabled.txt'
+  MFA_DISABLED_EMAIL_HTML = 'dwiest-django-users/email/mfa_disabled.html'
+  MFA_DISABLED_EMAIL_TEXT = 'dwiest-django-users/email/mfa_disabled.txt'
 
   MFA_ENABLED_EMAIL_SUBJECT = 'Multi-Factor Authentication Enabled'
-  MFA_ENABLED_EMAIL_HTML = 'email/mfa_enabled.html'
-  MFA_ENABLED_EMAIL_TEXT = 'email/mfa_enabled.txt'
+  MFA_ENABLED_EMAIL_HTML = 'dwiest-django-users/email/mfa_enabled.html'
+  MFA_ENABLED_EMAIL_TEXT = 'dwiest-django-users/email/mfa_enabled.txt'
 
   '''
     Activation id settings:

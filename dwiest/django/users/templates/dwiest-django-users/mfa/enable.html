@@ -1,9 +1,9 @@
 <Html>
 <Head>
   <Title>{{page_name}}</Title>
-{% include 'css.html' %}
-{% include 'django-messages-css.html' %}
-{% include 'footer-css.html' %}
+{% include 'dwiest-django-users/css.html' %}
+{% include 'dwiest-django-users/django-messages-css.html' %}
+{% include 'dwiest-django-users/footer-css.html' %}
   <Meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <Style>
 .show{
@@ -33,7 +33,7 @@
 <Body>
 {% block header %}
 {% with title=page_name %}
-{% include 'header.html' %}
+{% include 'dwiest-django-users/header.html' %}
 {% endwith %}
 {% endblock %}
 
@@ -99,7 +99,7 @@ Chrome based browser plugin:
 <A href="https://microsoftedge.microsoft.com/addons/detail/authenticator-2fa-client/ocglkepbibnalbgmbachknglpdipeoio">Authenticator: 2FA Client</A>
 </P>
 
-<Div class="footer">{% include 'footer.html' %}</Div>
+<Div class="footer">{% include 'dwiest-django-users/footer.html' %}</Div>
 </body>
 
 </html>

@@ -1,16 +1,16 @@
 <Html>
 <Head>
   <Title>Multi-Factor Authentication Enabled</Title>
-{% include 'css.html' %}
-{% include 'django-messages-css.html' %}
-{% include 'footer-css.html' %}
+{% include 'dwiest-django-users/css.html' %}
+{% include 'dwiest-django-users/django-messages-css.html' %}
+{% include 'dwiest-django-users/footer-css.html' %}
   <Meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </Head>
 
 <Body>
 {% block header %}
 {% with title='Multi-Factor Authentication Enabled'%}
-{% include 'header.html' %}
+{% include 'dwiest-django-users/header.html' %}
 {% endwith %}
 {% endblock %}
 
@@ -25,7 +25,7 @@ If you would like to disable multi-factor authentiction you may do so <A href="{
 </P>
 </Div>
 
-<Div class="footer">{% include 'footer.html' %}</Div>
+<Div class="footer">{% include 'dwiest-django-users/footer.html' %}</Div>
 </body>
 
 </html>
