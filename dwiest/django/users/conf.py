@@ -103,6 +103,7 @@ class UsersAppConf(AppConf):
       using a randomly generated value.  Intended for debug/test 
       purposes.
   '''
+
   MFA_SECRET_KEY = None
   MFA_ISSUER_NAME = None
   MFA_ACCEPT_ANY_VALUE = False
@@ -131,8 +132,6 @@ class UsersAppConf(AppConf):
   PASSWORD_RESET_REPLAYED_MFA_TOKEN_ERROR = 'The MFA token you entered has already been used.  Please wait and enter the next value shown in your authenticator app.'
   PASSWORD_RESET_ACTIVATION_ID_EXPIRED_ERROR = 'The activation id has expired.  Please request a new pasword reset email.'
   PASSWORD_RESET_ACTIVATION_ID_INVALID_ERROR = 'The activation id is invalid.'
-
-
 
   '''
     Password change settings
