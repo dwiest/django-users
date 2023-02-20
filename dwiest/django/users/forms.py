@@ -6,7 +6,7 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django import forms
 from django.contrib.auth import forms as authForms
 from django.utils.translation import ugettext, ugettext_lazy as _
-from enum import Enum
+from enum import Enum, auto
 from .conf import settings
 import uuid
 from .mfa import MfaModel, NonstickyTextInput
@@ -14,27 +14,20 @@ from .models import ActivationId
 import pyotp
 import pytz
 
-# we need to inherit from str in case form.errors.as_json() is called
-class Errors(str, Enum):
-  ACTIVATION_ID_EXPIRED = 0
-  ACTIVATION_ID_INVALID = 1
-  MFA_TOKEN_INVALID = 2
-  MFA_TOKEN_REPLAYED = 3
-  PASSWORD_MISMATCH = 4
-  USER_ALREADY_ACTIVATED = 5
-  USER_ALREADY_EXISTS = 6
-  USER_INVALID = 7
-  RESEND_NOT_ALLOWED = 8
-
 class RegistrationForm(UserCreationForm):
 
-  USERNAME_FIELD = 'username'
-  PASSWORD1_FIELD = 'password1'
-  PASSWORD2_FIELD = 'password2'
+  class Errors(str, Enum):
+    USER_ALREADY_ACTIVATED = auto()
+    USER_ALREADY_EXISTS = auto()
+
+  class Fields(str, Enum):
+    USERNAME = 'username'
+    PASSWORD1 = 'password1'
+    PASSWORD2 = 'password2'
 
   user = None
 
-  UserCreationForm.base_fields[PASSWORD2_FIELD].label = \
+  UserCreationForm.base_fields[Fields.PASSWORD2].label = \
     settings.USERS_REGISTRATION_PASSWORD2_FIELD_LABEL
 
   username = forms.EmailField(
@@ -51,7 +44,7 @@ class RegistrationForm(UserCreationForm):
     })
 
   def clean(self):
-    username = self.cleaned_data[self.USERNAME_FIELD]
+    username = self.cleaned_data[self.__class__.Fields.USERNAME]
 
     try:
       # save a reference to the user, used in save()
@@ -80,19 +73,19 @@ class RegistrationForm(UserCreationForm):
   @classmethod
   def get_user_already_activated_error(cls):
     return forms.ValidationError(
-      cls.error_messages[Errors.USER_ALREADY_ACTIVATED],
-      code=Errors.USER_ALREADY_ACTIVATED)
+      cls.error_messages[cls.Errors.USER_ALREADY_ACTIVATED],
+      code=cls.Errors.USER_ALREADY_ACTIVATED)
 
   @classmethod
   def get_user_already_exists_error(cls):
     return forms.ValidationError(
-      cls.error_messages[Errors.USER_ALREADY_EXISTS],
-      code=Errors.USER_ALREADY_EXISTS)
+      cls.error_messages[cls.Errors.USER_ALREADY_EXISTS],
+      code=cls.Errors.USER_ALREADY_EXISTS)
 
   def save(self):
-    username = self.cleaned_data[self.USERNAME_FIELD]
-    email = self.cleaned_data[self.USERNAME_FIELD]
-    password = self.cleaned_data[self.PASSWORD1_FIELD]
+    username = self.cleaned_data[self.__class__.Fields.USERNAME]
+    email = self.cleaned_data[self.__class__.Fields.USERNAME]
+    password = self.cleaned_data[self.__class__.Fields.PASSWORD1]
 
     # Create an account if one doesn't already exist
     if not self.user:
@@ -125,7 +118,14 @@ class RegistrationForm(UserCreationForm):
 
 class RegistrationConfirmForm(forms.Form):
 
-  ACTIVATION_ID_FIELD = 'activation_id'
+  class Errors(str, Enum):
+    ACTIVATION_ID_EXPIRED = auto()
+    ACTIVATION_ID_INVALID = auto()
+    USER_ALREADY_EXISTS = auto()
+    USER_INVALID = auto()
+
+  class Fields(str, Enum):
+    ACTIVATION_ID = 'activation_id'
 
   activation_id = forms.CharField(
     label=_(settings.USERS_REGISTRATION_ACTIVATION_ID_FIELD_LABEL),
@@ -145,7 +145,7 @@ class RegistrationConfirmForm(forms.Form):
     }
 
   def clean_activation_id(self):
-    activation_id = self.cleaned_data[self.ACTIVATION_ID_FIELD]
+    activation_id = self.cleaned_data[self.__class__.Fields.ACTIVATION_ID]
 
     try:
       self.activation_id = ActivationId.objects.get(value=activation_id)
@@ -170,15 +170,15 @@ class RegistrationConfirmForm(forms.Form):
   @classmethod
   def get_activation_id_invalid_error(cls):
     return forms.ValidationError(
-      cls.error_messages[Errors.ACTIVATION_ID_INVALID],
-      code=Errors.ACTIVATION_ID_INVALID,
+      cls.error_messages[cls.Errors.ACTIVATION_ID_INVALID],
+      code=cls.Errors.ACTIVATION_ID_INVALID,
       )
 
   @classmethod
   def get_activation_id_expired_error(cls):
     return ValidationError(
-      cls.error_messages[Errors.ACTIVATION_ID_EXPIRED],
-      code=Errors.ACTIVATION_ID_EXPIRED
+      cls.error_messages[cls.Errors.ACTIVATION_ID_EXPIRED],
+      code=cls.Errors.ACTIVATION_ID_EXPIRED
       )
 
   def clean(self):
@@ -198,15 +198,15 @@ class RegistrationConfirmForm(forms.Form):
   @classmethod
   def get_user_invalid_error(cls):
     return ValidationError(
-      cls.error_messages[Errors.USER_INVALID],
-      code=Errors.USER_INVALID
+      cls.error_messages[cls.Errors.USER_INVALID],
+      code=cls.Errors.USER_INVALID
       )
 
   @classmethod
   def get_user_already_exists_error(cls):
     return ValidationError(
-      cls.error_messages[Errors.USER_ALREADY_EXISTS],
-      code=Errors.USER_ALREADY_EXISTS
+      cls.error_messages[cls.Errors.USER_ALREADY_EXISTS],
+      code=cls.Errors.USER_ALREADY_EXISTS
       )
 
   def save(self):
@@ -223,7 +223,15 @@ class RegistrationConfirmForm(forms.Form):
 
 class RegistrationResendForm(forms.Form):
 
-  ACTIVATION_ID_FIELD = 'activation_id'
+  class Errors(str, Enum):
+    ACTIVATION_ID_EXPIRED = auto()
+    ACTIVATION_ID_INVALID = auto()
+    USER_ALREADY_ACTIVATED = auto()
+    USER_INVALID = auto()
+    RESEND_NOT_ALLOWED = auto()
+
+  class Fields(str, Enum):
+    ACTIVATION_ID = 'activation_id'
 
   activation_id = forms.CharField(
     label=_(settings.USERS_REGISTRATION_ACTIVATION_ID_FIELD_LABEL),
@@ -245,7 +253,7 @@ class RegistrationResendForm(forms.Form):
     }
 
   def clean_activation_id(self):
-    activation_id = self.cleaned_data[self.ACTIVATION_ID_FIELD]
+    activation_id = self.cleaned_data[self.__class__.Fields.ACTIVATION_ID]
 
     try:
       self.activation_id = ActivationId.objects.get(value=activation_id)
@@ -258,27 +266,27 @@ class RegistrationResendForm(forms.Form):
   @classmethod
   def get_activation_id_invalid_error(cls):
     return forms.ValidationError(
-      cls.error_messages[Errors.ACTIVATION_ID_INVALID],
-      code=Errors.ACTIVATION_ID_INVALID
+      cls.error_messages[cls.Errors.ACTIVATION_ID_INVALID],
+      code=cls.Errors.ACTIVATION_ID_INVALID
       )
 
   @classmethod
   def get_resend_not_allowed_error(cls):
     return ValidationError(
-      cls.error_messages[Errors.RESEND_NOT_ALLOWED],
-      code=Errors.RESEND_NOT_ALLOWED)
+      cls.error_messages[cls.Errors.RESEND_NOT_ALLOWED],
+      code=cls.Errors.RESEND_NOT_ALLOWED)
 
   @classmethod
   def get_user_invalid_error(cls):
     return ValidationError(
-      cls.error_messages[Errors.USER_INVALID],
-      code=Errors.USER_INVALID,)
+      cls.error_messages[cls.Errors.USER_INVALID],
+      code=cls.Errors.USER_INVALID,)
 
   @classmethod
   def get_user_already_active_error(cls):
     return ValidationError(
-      cls.error_messages[Errors.USER_ALREADY_ACTIVATED],
-      code=Errors.USER_ALREADY_ACTIVATED)
+      cls.error_messages[cls.Errors.USER_ALREADY_ACTIVATED],
+      code=cls.Errors.USER_ALREADY_ACTIVATED)
 
   def clean(self):
     if settings.USERS_REGISTRATION_ALLOW_EMAIL_RESEND != True:
@@ -311,7 +319,11 @@ class RegistrationResendForm(forms.Form):
 
 class SendPasswordResetForm(forms.Form):
 
-  EMAIL_FIELD = 'email'
+  class Errors(str, Enum):
+    USER_INVALID = auto()
+
+  class Fields(str, Enum):
+    EMAIL = 'email'
 
   error_messages = {
     Errors.USER_INVALID:
@@ -330,7 +342,7 @@ class SendPasswordResetForm(forms.Form):
   )
 
   def clean(self):
-    email = self.cleaned_data[self.EMAIL_FIELD]
+    email = self.cleaned_data[self.__class__.Fields.EMAIL]
 
     try:
       user = User.objects.get(username=email, is_active=True)
@@ -360,17 +372,25 @@ class SendPasswordResetForm(forms.Form):
   @classmethod
   def get_invalid_user_error(cls):
     return ValidationError(
-      cls.error_messages[Errors.USER_INVALID],
-      code=Errors.USER_INVALID,
+      cls.error_messages[cls.Errors.USER_INVALID],
+      code=cls.Errors.USER_INVALID,
       )
 
 
 class PasswordResetConfirmForm(authForms.PasswordChangeForm):
 
-  NEW_PASSWORD1_FIELD = 'new_password1'
-  NEW_PASSWORD2_FIELD = 'new_password2'
-  ACTIVATION_ID_FIELD = 'activation_id'
-  MFA_TOKEN_FIELD = 'mfa_token'
+  class Errors(str, Enum):
+    ACTIVATION_ID_EXPIRED = auto()
+    ACTIVATION_ID_INVALID = auto()
+    MFA_TOKEN_INVALID = auto()
+    MFA_TOKEN_REPLAYED = auto()
+    PASSWORD_MISMATCH = auto()
+
+  class Fields(str, Enum):
+    NEW_PASSWORD1 = 'new_password1'
+    NEW_PASSWORD2 = 'new_password2'
+    ACTIVATION_ID = 'activation_id'
+    MFA_TOKEN = 'mfa_token'
 
   activation_id = forms.CharField(
     label=_(settings.USERS_PASSWORD_RESET_ACTIVATION_ID_FIELD_LABEL),
@@ -387,10 +407,10 @@ class PasswordResetConfirmForm(authForms.PasswordChangeForm):
 
   old_password = None # clear existing field
 
-  authForms.PasswordChangeForm.base_fields[NEW_PASSWORD1_FIELD].label = \
+  authForms.PasswordChangeForm.base_fields[Fields.NEW_PASSWORD1].label = \
     settings.USERS_PASSWORD_RESET_NEW_PASSWORD1_LABEL
 
-  authForms.PasswordChangeForm.base_fields[NEW_PASSWORD2_FIELD].label = \
+  authForms.PasswordChangeForm.base_fields[Fields.NEW_PASSWORD2].label = \
     settings.USERS_PASSWORD_RESET_NEW_PASSWORD2_LABEL
 
   authForms.PasswordChangeForm.error_messages.update({
@@ -409,19 +429,19 @@ class PasswordResetConfirmForm(authForms.PasswordChangeForm):
   @classmethod
   def get_activation_id_invalid_error(cls):
     return forms.ValidationError(
-      cls.error_messages[Errors.ACTIVATION_ID_INVALID],
-      code=Errors.ACTIVATION_ID_INVALID
+      cls.error_messages[cls.Errors.ACTIVATION_ID_INVALID],
+      code=cls.Errors.ACTIVATION_ID_INVALID
       )
 
   @classmethod
   def get_activation_id_expired_error(cls):
     return ValidationError(
-      cls.error_messages[Errors.ACTIVATION_ID_EXPIRED],
-      code=Errors.ACTIVATION_ID_EXPIRED
+      cls.error_messages[cls.Errors.ACTIVATION_ID_EXPIRED],
+      code=cls.Errors.ACTIVATION_ID_EXPIRED
       )
 
   def clean_activation_id(self):
-    id = self.cleaned_data[self.ACTIVATION_ID_FIELD]
+    id = self.cleaned_data[self.__class__.Fields.ACTIVATION_ID]
 
     try:
       self.activation_id = ActivationId.objects.get(value=id)
@@ -447,7 +467,7 @@ class PasswordResetConfirmForm(authForms.PasswordChangeForm):
     return id
 
   def clean_mfa_token(self):
-    mfa_token = self.cleaned_data[self.MFA_TOKEN_FIELD]
+    mfa_token = self.cleaned_data[self.__class__.Fields.MFA_TOKEN]
 
     if settings.USERS_MFA_ACCEPT_ANY_VALUE == True:
       print("!WARNING! MFA accepting any value")
@@ -477,15 +497,15 @@ class PasswordResetConfirmForm(authForms.PasswordChangeForm):
   @classmethod
   def get_invalid_mfa_token_error(cls):
     return ValidationError(
-      cls.error_messages[Errors.MFA_TOKEN_INVALID],
-      code=Errors.MFA_TOKEN_INVALID,
+      cls.error_messages[cls.Errors.MFA_TOKEN_INVALID],
+      code=cls.Errors.MFA_TOKEN_INVALID,
       )
 
   @classmethod
   def get_replayed_mfa_token_error(cls):
     return ValidationError(
-      cls.error_messages[Errors.MFA_TOKEN_REPLAYED],
-      code=Errors.MFA_TOKEN_REPLAYED,
+      cls.error_messages[cls.Errors.MFA_TOKEN_REPLAYED],
+      code=cls.Errors.MFA_TOKEN_REPLAYED,
       )
 
   def save(self):
@@ -499,10 +519,17 @@ class PasswordResetConfirmForm(authForms.PasswordChangeForm):
 
 class PasswordChangeForm(authForms.PasswordChangeForm):
 
-  OLD_PASSWORD_FIELD = 'old_password'
-  NEW_PASSWORD1_FIELD = 'new_password1'
-  NEW_PASSWORD2_FIELD = 'new_password2'
-  MFA_TOKEN_FIELD = 'mfa_token'
+  class Errors(str, Enum):
+    MFA_TOKEN_INVALID = auto()
+    MFA_TOKEN_REPLAYED = auto()
+    PASSWORD_MISMATCH = auto()
+    USER_INVALID = auto()
+
+  class Fields(str, Enum):
+    OLD_PASSWORD = 'old_password'
+    NEW_PASSWORD1 = 'new_password1'
+    NEW_PASSWORD2 = 'new_password2'
+    MFA_TOKEN = 'mfa_token'
 
   mfa_token = forms.CharField(
     label=_(settings.USERS_PASSWORD_CHANGE_MFA_TOKEN_FIELD_LABEL),
@@ -511,13 +538,13 @@ class PasswordChangeForm(authForms.PasswordChangeForm):
     required=False,
     widget=NonstickyTextInput(attrs={'size': 6}))
 
-  authForms.PasswordChangeForm.base_fields[OLD_PASSWORD_FIELD].label = \
+  authForms.PasswordChangeForm.base_fields[Fields.OLD_PASSWORD].label = \
     settings.USERS_PASSWORD_CHANGE_OLD_PASSWORD_FIELD_LABEL
 
-  authForms.PasswordChangeForm.base_fields[NEW_PASSWORD1_FIELD].label = \
+  authForms.PasswordChangeForm.base_fields[Fields.NEW_PASSWORD1].label = \
     settings.USERS_PASSWORD_CHANGE_PASSWORD1_FIELD_LABEL
 
-  authForms.PasswordChangeForm.base_fields[NEW_PASSWORD2_FIELD].label = \
+  authForms.PasswordChangeForm.base_fields[Fields.NEW_PASSWORD2].label = \
     settings.USERS_PASSWORD_CHANGE_PASSWORD2_FIELD_LABEL
 
   authForms.PasswordChangeForm.error_messages.update({
@@ -531,9 +558,8 @@ class PasswordChangeForm(authForms.PasswordChangeForm):
       _(settings.USERS_PASSWORD_CHANGE_MFA_TOKEN_REPLAYED_ERROR),
     })
 
-
   def clean_mfa_token(self):
-    mfa_token = self.cleaned_data[self.MFA_TOKEN_FIELD]
+    mfa_token = self.cleaned_data[self.__class__.Fields.MFA_TOKEN]
 
     if settings.USERS_MFA_ACCEPT_ANY_VALUE == True:
       print("!WARNING! MFA accepting any value")
@@ -562,13 +588,13 @@ class PasswordChangeForm(authForms.PasswordChangeForm):
   @classmethod
   def get_invalid_mfa_token_error(cls):
     return ValidationError(
-      cls.error_messages[Errors.MFA_TOKEN_INVALID],
-      code=Errors.MFA_TOKEN_INVALID,
+      cls.error_messages[cls.Errors.MFA_TOKEN_INVALID],
+      code=cls.Errors.MFA_TOKEN_INVALID,
     )
 
   @classmethod
   def get_replayed_mfa_token_error(cls):
     return ValidationError(
-      cls.error_messages[Errors.MFA_TOKEN_REPLAYED],
-      code=Errors.MFA_TOKEN_REPLAYED,
+      cls.error_messages[cls.Errors.MFA_TOKEN_REPLAYED],
+      code=cls.Errors.MFA_TOKEN_REPLAYED,
     )
