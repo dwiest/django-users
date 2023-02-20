@@ -68,6 +68,7 @@ class UsersAppConf(AppConf):
   REGISTRATION_ALLOW_EMAIL_RESEND = False
   REGISTRATION_ALLOW_ALREADY_ACTIVE = False
   REGISTRATION_EMAIL_FIELD_CLASS = 'email'
+  REGISTRATION_EMAIL_FIELD_MAX_LENGTH = 50
   REGISTRATION_EXPIRATION_DAYS = 1
   REGISTRATION_TEMPLATE = 'dwiest-django-users/registration/registration.html'
   REGISTRATION_SUCCESS_TEMPLATE = 'dwiest-django-users/registration/registration_success.html'
@@ -80,6 +81,9 @@ class UsersAppConf(AppConf):
   REGISTRATION_ACTIVATION_ID_EXPIRED_ERROR = 'Your account registration link has expired.'
   REGISTRATION_ACTIVATION_ID_INVALID_ERROR = 'The activation id is invalid.'
   REGISTRATION_RESEND_NOT_ALLOWED_ERROR = 'Re-sending of registration emails is not allowed.'
+  REGISTRATION_PASSWORD2_FIELD_LABEL = 'Confirm Password'
+  REGISTRATION_ACTIVATION_ID_FIELD_LABEL = 'Activation Id'
+  REGISTRATION_EMAIL_FIELD_LABEL = 'Email'
 
   '''
     Login settings
@@ -117,12 +121,13 @@ class UsersAppConf(AppConf):
 
   PASSWORD_RESET_EXPIRATION_DAYS = 1
   PASSWORD_RESET_EMAIL_FIELD_CLASS = 'email'
+  PASSWORD_RESET_EMAIL_FIELD_LABEL = 'Email'
   PASSWORD_RESET_TEMPLATE = 'dwiest-django-users/password_reset/send_password_reset.html'
   PASSWORD_RESET_SUCCESS_TEMPLATE = 'dwiest-django-users/password_reset/send_password_reset_success.html'
   PASSWORD_RESET_FAILED_TEMPLATE = 'dwiest-django-users/password_reset/password_reset_failed.html'
-  PASSWORD_RESET_CONFIM_TEMPLATE = 'dwiest-django-users/password_reset/password_reset_confirm.html'
+  PASSWORD_RESET_CONFIRM_TEMPLATE = 'dwiest-django-users/password_reset/password_reset_confirm.html'
   PASSWORD_RESET_CONFIRM_SUCCESS_TEMPLATE = 'dwiest-django-users/password_reset/password_reset_confirm_success.html'
-  PASSWORD_RESET_ACTIVATION_ID_LABEL = 'Activation Id'
+  PASSWORD_RESET_ACTIVATION_ID_FIELD_LABEL = 'Activation Id'
   PASSWORD_RESET_USER_NOT_FOUND_ERROR = 'A user with that email address could not be located.'
   PASSWORD_RESET_MFA_TOKEN_LABEL = 'MFA Token'
   PASSWORD_RESET_NEW_PASSWORD1_LABEL = 'New Password'
