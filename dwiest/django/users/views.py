@@ -47,9 +47,9 @@ class RegistrationView(FormView):
       form_errors = json.loads(form.errors.as_json()) # as_data() doesn't include the code
 
       # if an account has already been activated don't show the other errors
-      if 'username' in form_errors:
-        for error in form_errors['username']:
-          if error['code'] == 'user_already_activated':
+      if form.Fields.USERNAME in form_errors:
+        for error in form_errors[form.Fields.USERNAME]:
+          if error['code'] == form.Errors.USER_ALREADY_ACTIVE:
             messages.error(request, error['message'])
             process_errors = False
 
@@ -57,7 +57,7 @@ class RegistrationView(FormView):
         for field, errors in form_errors.items():
           for error in errors:
             messages.error(request, error['message'])
-            if error['code'] == 'user_already_exists' and form.activation_id:
+            if error['code'] == form.Errors.USER_ALREADY_EXISTS and form.activation_id:
               query_string = '?activation_id=' + form.activation_id.value
 
       request.session['registration_failed'] = True
@@ -118,7 +118,7 @@ class RegistrationConfirmView(TemplateView):
     # Ensure that an activation_id parameter was present in the query string
     activation_id = request.GET.get('activation_id')
     if activation_id:
-      form.fields['activation_id'].initial = activation_id
+      form.fields[form.Fields.ACTIVATION_ID].initial = activation_id
     else:
       messages.error(request, 'The activation link was not valid.')
       request.session['registration_confirm_failed'] = True
@@ -135,7 +135,7 @@ class RegistrationConfirmView(TemplateView):
       # if an account has already been activated don't show the other errors
       if '__all__' in form_errors:
         for error in form_errors['__all__']:
-          if error['code'] == 'user_already_exists':
+          if error['code'] == form.Errors.USER_ALREADY_EXISTS:
             messages.error(request, error['message'])
             process_errors = False
 
@@ -143,7 +143,7 @@ class RegistrationConfirmView(TemplateView):
         for field, errors in form_errors.items():
           for error in errors:
             messages.error(request, error['message'])
-            if error['code'] == 'activation_id_expired':
+            if error['code'] == form.Errors.ACTIVATION_ID_EXPIRED:
               query_string = '?activation_id=' + activation_id
 
       request.session['registration_confirm_failed'] = True
@@ -294,7 +294,7 @@ class PasswordResetConfirmView(TemplateView):
     else:
       form = self.form_class(None)
       self.response_dict['form'] = form
-      form.fields['activation_id'].initial = activation_id
+      form.fields[form.Fields.ACTIVATION_ID].initial = activation_id
       return render(request, self.template_name, self.response_dict)
 
   def post(self, request, *args, **kwargs):
@@ -310,9 +310,9 @@ class PasswordResetConfirmView(TemplateView):
       return HttpResponseRedirect(reverse(self.success_page))
     else:
       # Don't allow form re-submission for activation id issues
-      if 'activation_id' in form.errors:
+      if form.Fields.ACTIVATION_ID in form.errors:
         request.session['password_reset_failed'] = True
-        for error in form.errors['activation_id']:
+        for error in form.errors[form.Fields.ACTIVATION_ID]:
           messages.error(request, error)
         return HttpResponseRedirect(reverse(self.fail_page))
       else:
@@ -369,7 +369,7 @@ class PasswordChangeView(LoginRequiredMixin, TemplateView):
     return render(request, self.template_name, self.response_dict)
 
   def post(self, request, *args, **kwargs):
-    form = PasswordChangeForm(request.user, data=request.POST)
+    form = self.form_class(request.user, data=request.POST)
     self.response_dict['form'] = form
 
     if form.is_valid():
