@@ -18,7 +18,7 @@ status_page = 'home'
 
 class RegistrationView(FormView):
   page_name = 'User Registration'
-  template_name = 'dwiest-django-users/registration/registration.html'
+  template_name = settings.USERS_REGISTRATION_TEMPLATE
   success_page = 'registration_success'
   fail_page = 'registration_failed'
   form_class = RegistrationForm
@@ -66,7 +66,7 @@ class RegistrationView(FormView):
 
 class RegistrationSuccessView(TemplateView):
   page_name = 'Registration Successful'
-  template_name = 'dwiest-django-users/registration/registration_success.html'
+  template_name = settings.USERS_REGISTRATION_SUCCESS_TEMPLATE
 
   def __init__(self, *args, **kwargs):
     self.response_dict = {
@@ -83,7 +83,7 @@ class RegistrationSuccessView(TemplateView):
 
 class RegistrationFailedView(TemplateView):
   page_name = 'Registration Failed'
-  template_name = 'dwiest-django-users/registration/registration_failed.html'
+  template_name = settings.USERS_REGISTRATION_FAILED_TEMPLATE
 
   def __init__(self, *args, **kwargs):
     self.response_dict = {
@@ -152,7 +152,7 @@ class RegistrationConfirmView(TemplateView):
 
 class RegistrationConfirmSuccessView(TemplateView):
   page_name = 'Account Activated'
-  template_name = 'dwiest-django-users/registration/registration_confirm_success.html'
+  template_name = settings.USERS_REGISTRATION_CONFIRM_SUCCESS_TEMPLATE
 
   def __init__(self, *args, **kwargs):
     self.response_dict = {
@@ -169,7 +169,7 @@ class RegistrationConfirmSuccessView(TemplateView):
 
 class RegistrationConfirmFailedView(TemplateView):
   page_name = 'Account Activation Failed'
-  template_name = 'dwiest-django-users/registration/registration_confirm_failed.html'
+  template_name = settings.USERS_REGISTRATION_CONFIRM_FAILED_TEMPLATE
 
   def __init__(self, *args, **kwargs):
     self.response_dict = {
@@ -224,7 +224,7 @@ class RegistrationResendView(TemplateView):
 
 class SendPasswordResetView(TemplateView):
   page_name = 'Password Reset'
-  template_name = 'dwiest-django-users/password_reset/send_password_reset.html'
+  template_name = settings.USERS_PASSWORD_RESET_TEMPLATE
   success_page = 'password_reset_success'
   fail_page = 'password_reset_failed'
   form_class = SendPasswordResetForm
@@ -258,7 +258,7 @@ class SendPasswordResetView(TemplateView):
 
 class SendPasswordResetSuccessView(TemplateView):
   page_name = 'Password Reset Email Sent'
-  template_name = 'dwiest-django-users/password_reset/send_password_reset_success.html'
+  template_name = settings.USERS_PASSWORD_RESET_SUCCESS_TEMPLATE
 
   def __init__(self, *args, **kwargs):
     self.response_dict = {
@@ -275,7 +275,7 @@ class SendPasswordResetSuccessView(TemplateView):
 
 class PasswordResetConfirmView(TemplateView):
   page_name = 'Password Reset'
-  template_name = 'dwiest-django-users/password_reset/password_reset_confirm.html'
+  template_name = settings.USERS_PASSWORD_RESET_CONFIRM_TEMPLATE
   success_page = 'password_reset_confirm_success'
   fail_page = 'password_reset_failed'
   form_class = PasswordResetConfirmForm
@@ -321,7 +321,7 @@ class PasswordResetConfirmView(TemplateView):
 
 class PasswordResetConfirmSuccessView(TemplateView):
   page_name = 'Password Changed'
-  template_name = 'dwiest-django-users/password_reset/password_reset_confirm_success.html'
+  template_name = settings.USERS_PASSWORD_RESET_CONFIRM_SUCCESS_TEMPLATE
 
   def __init__(self, *args, **kwargs):
     self.response_dict = {
@@ -338,7 +338,7 @@ class PasswordResetConfirmSuccessView(TemplateView):
 
 class PasswordResetFailedView(TemplateView):
   page_name = 'Password Reset Failed'
-  template_name = 'dwiest-django-users/password_reset/password_reset_failed.html'
+  template_name = settings.USERS_PASSWORD_RESET_FAILED_TEMPLATE
 
   def __init__(self, *args, **kwargs):
     self.response_dict = {
@@ -356,7 +356,7 @@ class PasswordResetFailedView(TemplateView):
 class PasswordChangeView(LoginRequiredMixin, TemplateView):
   form_class = PasswordChangeForm
   page_name = 'Change Password'
-  template_name = "dwiest-django-users/password_change/password_change.html"
+  template_name = settings.USERS_PASSWORD_CHANGE_TEMPLATE
   success_page = 'change_password_success'
 
   def __init__(self, *args, **kwargs):
@@ -385,7 +385,7 @@ class PasswordChangeView(LoginRequiredMixin, TemplateView):
 
 class PasswordChangeSuccessView(TemplateView):
   page_name = 'Password Changed'
-  template_name = 'dwiest-django-users/password_change/password_change_success.html'
+  template_name = settings.USERS_PASSWORD_CHANGE_SUCCESS_TEMPLATE
 
   def __init__(self, *args, **kwargs):
     self.response_dict = {
