@@ -1,7 +1,8 @@
 <Style>
 html {
   height: 100%;
-}
+  }
+
 body {
   display: flex;
   flex-direction: column;
@@ -10,21 +11,62 @@ body {
   margin: auto;
   vertical-align: middle;
   }
+
 .content {
   flex: 1;
   text-align: center;
   vertical-align: middle;
-}
+  }
+
 .container {
   display: flex;
   align-items: flex-start;
   justify-content: flex-start;
   width: 100%;
   }
-center {
+
+.center {
   text-align: center;
   }
-right {
+
+.filler {
+  flex: 1;
+  }
+
+.right {
   text-align: right;
   }
+
+@media only screen and (max-width: 600px) {
+  h2 {
+    font-size: 5vw;
+    }
+  h3 {
+    font-size: 4vw;
+    }
+}
+
+@media only screen and (min-width: 600px) {
+  h2 {
+    font-size: 4.5vw;
+    }
+}
+
+@media only screen and (min-width: 768px) {
+  h2 {
+    font-size: 4vw;
+    }
+}
+
+@media only screen and (min-width: 992px) {
+  h2 {
+    font-size: 3.6vw;
+    }
+}
+
+@media only screen and (min-width: 1200px) {
+  h2 {
+    font-size: 3.2vw;
+    }
+}
 </Style>
