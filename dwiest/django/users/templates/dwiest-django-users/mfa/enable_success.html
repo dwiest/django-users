@@ -14,6 +14,8 @@
 {% endwith %}
 {% endblock %}
 
+<Div class="filler"></Div>
+
 <Div class="content">
 <H2>Success!</H2>
 <P>
@@ -24,6 +26,8 @@ You will need to enter the value from your authenticator app when logging in.
 If you would like to disable multi-factor authentiction you may do so <A href="{% url 'mfa_disable' %}">here</A>.
 </P>
 </Div>
+
+<Div class="filler"></Div>
 
 <Div class="footer">{% include 'dwiest-django-users/footer.html' %}</Div>
 </body>

@@ -14,6 +14,8 @@
 {% endwith %}
 {% endblock %}
 
+<Div class="filler"></Div>
+
 <Div class="content">
 {% if user_has_mfa %}
 <H2>Multi-Factor is Enabled</H2>
@@ -31,6 +33,8 @@ Click <A href="{%url 'mfa_enable'%}">here</A> to enable it.
 </P>
 {% endif %}
 </Div>
+
+<Div class="filler"></Div>
 
 <Div class="footer">{% include 'dwiest-django-users/footer.html' %}</Div>
 </body>

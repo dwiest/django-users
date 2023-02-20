@@ -14,6 +14,8 @@
 {% endwith %}
 {% endblock %}
 
+<Div class="filler"></Div>
+
 <Div class="content">
 <H2>Success!</H2>
 <P>
@@ -24,6 +26,8 @@ You will no longer need to enter the value from your authenticator app when logg
 If you would like to re-enable multi-factor authentiction you may do so <A href="{% url 'mfa_enable' %}">here</A>.
 </P>
 </Div>
+
+<Div class="filler"></Div>
 
 <Div class="footer">{% include 'dwiest-django-users/footer.html' %}</Div>
 </body>
