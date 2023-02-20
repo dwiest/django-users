@@ -2,7 +2,7 @@ from django.contrib.auth import forms
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.forms import CharField
 from django.utils.translation import gettext, gettext_lazy as _
-from enum import Enum
+from enum import Enum, auto
 from ..users.mfa import MfaModel, NonstickyTextInput
 from ..users.conf import settings
 import pyotp
@@ -11,13 +11,14 @@ class AuthenticationForm(forms.AuthenticationForm):
 
   # we need to inherit from str in case form.errors.as_json() is called
   class Errors(str, Enum):
-    MFA_TOKEN_INVALID = 0
-    MFA_TOKEN_REPLAYED = 1
+    MFA_TOKEN_INVALID = auto()
+    MFA_TOKEN_REPLAYED = auto()
+
+  class Fields(str, Enum):
+    MFA_TOKEN = 'mfa_token'
 
   CLASS = 'class'
   SIZE = 'size'
-
-  MFA_TOKEN_FIELD = 'mfa_token'
 
   mfa_token = CharField(
     label=_(settings.USERS_LOGIN_MFA_FIELD_LABEL),
@@ -41,7 +42,7 @@ class AuthenticationForm(forms.AuthenticationForm):
 
   def clean(self):
     super().clean()
-    mfa_token = self.cleaned_data.get(self.MFA_TOKEN_FIELD)
+    mfa_token = self.cleaned_data.get(self.__class__.Fields.MFA_TOKEN)
 
     if settings.USERS_MFA_ACCEPT_ANY_VALUE == True:
       print("!WARNING! MFA accepting any value")
