@@ -2,18 +2,22 @@ from django.contrib.auth import forms
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.forms import CharField
 from django.utils.translation import gettext, gettext_lazy as _
+from enum import Enum
 from ..users.mfa import MfaModel, NonstickyTextInput
 from ..users.conf import settings
 import pyotp
 
 class AuthenticationForm(forms.AuthenticationForm):
 
+  # we need to inherit from str in case form.errors.as_json() is called
+  class Errors(str, Enum):
+    MFA_TOKEN_INVALID = 0
+    MFA_TOKEN_REPLAYED = 1
+
   CLASS = 'class'
   SIZE = 'size'
-  MFA_TOKEN = 'mfa_token'
+
   MFA_TOKEN_FIELD = 'mfa_token'
-  INVALID_MFA_TOKEN = 'invalid_mfa_token'
-  REPLAYED_MFA_TOKEN = 'replayed_mfa_token'
 
   mfa_token = CharField(
     label=_(settings.USERS_LOGIN_MFA_FIELD_LABEL),
@@ -29,11 +33,11 @@ class AuthenticationForm(forms.AuthenticationForm):
     )
 
   forms.AuthenticationForm.error_messages.update({
-    INVALID_MFA_TOKEN: _(
-      settings.USERS_LOGIN_INVALID_MFA_TOKEN_ERROR,
+    Errors.MFA_TOKEN_INVALID: _(
+      settings.USERS_LOGIN_MFA_TOKEN_INVALID_ERROR,
     ),
-    REPLAYED_MFA_TOKEN: _(
-      settings.USERS_LOGIN_REPLAYED_MFA_TOKEN_ERROR,
+    Errors.MFA_TOKEN_REPLAYED: _(
+      settings.USERS_LOGIN_MFA_TOKEN_REPLAYED_ERROR,
     ),
   })
 
@@ -70,13 +74,13 @@ class AuthenticationForm(forms.AuthenticationForm):
   @classmethod
   def get_invalid_mfa_token_error(cls):
     return ValidationError(
-      cls.error_messages[cls.INVALID_MFA_TOKEN],
-      code=cls.INVALID_MFA_TOKEN,
+      cls.error_messages[Errors.MFA_TOKEN_INVALID],
+      code=Errors.MFA_TOKEN_INVALID,
     )
 
   @classmethod
   def get_replayed_mfa_token_error(cls):
     return ValidationError(
-      cls.error_messages[cls.REPLAYED_MFA_TOKEN],
-      code=cls.REPLAYED_MFA_TOKEN,
+      cls.error_messages[Errors.MFA_TOKEN_REPLAYED],
+      code=Errors.MFA_TOKEN_REPLAYED,
     )

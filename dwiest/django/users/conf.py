@@ -91,8 +91,8 @@ class UsersAppConf(AppConf):
 
   LOGIN_TEMPLATE = 'dwiest-django-users/registration/login.html'
   LOGIN_MFA_FIELD_LABEL = 'MFA token'
-  LOGIN_INVALID_MFA_TOKEN_ERROR = 'The MFA token you entered is not correct.'
-  LOGIN_REPLAYED_MFA_TOKEN_ERROR = 'The MFA token you entered has already been used. Please wait and enter the next value shown in your authenticator app.'
+  LOGIN_MFA_TOKEN_INVALID_ERROR = 'The MFA token you entered is not correct.'
+  LOGIN_MFA_TOKEN_REPLAYED_ERROR = 'The MFA token you entered has already been used. Please wait and enter the next value shown in your authenticator app.'
 
   '''
   MFA settings:
@@ -128,13 +128,13 @@ class UsersAppConf(AppConf):
   PASSWORD_RESET_CONFIRM_TEMPLATE = 'dwiest-django-users/password_reset/password_reset_confirm.html'
   PASSWORD_RESET_CONFIRM_SUCCESS_TEMPLATE = 'dwiest-django-users/password_reset/password_reset_confirm_success.html'
   PASSWORD_RESET_ACTIVATION_ID_FIELD_LABEL = 'Activation Id'
-  PASSWORD_RESET_USER_NOT_FOUND_ERROR = 'A user with that email address could not be located.'
+  PASSWORD_RESET_USER_INVALID_ERROR = 'A user with that email address could not be located.'
   PASSWORD_RESET_MFA_TOKEN_LABEL = 'MFA Token'
   PASSWORD_RESET_NEW_PASSWORD1_LABEL = 'New Password'
   PASSWORD_RESET_NEW_PASSWORD2_LABEL = 'Confirm Password'
   PASSWORD_RESET_PASSWORD_MISMATCH_ERROR = "The two password fields didn't match."
-  PASSWORD_RESET_INVALID_MFA_TOKEN_ERROR = 'The MFA token you entered is not correct.'
-  PASSWORD_RESET_REPLAYED_MFA_TOKEN_ERROR = 'The MFA token you entered has already been used.  Please wait and enter the next value shown in your authenticator app.'
+  PASSWORD_RESET_MFA_TOKEN_INVALID_ERROR = 'The MFA token you entered is not correct.'
+  PASSWORD_RESET_MFA_TOKEN_REPLAYED_ERROR = 'The MFA token you entered has already been used.  Please wait and enter the next value shown in your authenticator app.'
   PASSWORD_RESET_ACTIVATION_ID_EXPIRED_ERROR = 'The activation id has expired.  Please request a new pasword reset email.'
   PASSWORD_RESET_ACTIVATION_ID_INVALID_ERROR = 'The activation id is invalid.'
 
@@ -149,6 +149,6 @@ class UsersAppConf(AppConf):
   PASSWORD_CHANGE_PASSWORD1_FIELD_LABEL = 'New Password'
   PASSWORD_CHANGE_PASSWORD2_FIELD_LABEL = 'Confirm Password'
   PASSWORD_CHANGE_PASSWORD_MISMATCH_ERROR = "The two password fields didn't match."
-  PASSWORD_CHANGE_INVALID_USER_ERROR = 'Your password could not be updated.'
-  PASSWORD_CHANGE_INVALID_MFA_TOKEN_ERROR = 'The MFA token you entered is not correct.'
-  PASSWORD_CHANGE_REPLAYED_MFA_TOKEN_ERROR = 'The MFA token you entered has already been used.  Please wait and enter the next value shown in your authenticator app.'
+  PASSWORD_CHANGE_USER_INVALID_ERROR = 'Your password could not be updated.'
+  PASSWORD_CHANGE_MFA_TOKEN_INVALID_ERROR = 'The MFA token you entered is not correct.'
+  PASSWORD_CHANGE_MFA_TOKEN_REPLAYED_ERROR = 'The MFA token you entered has already been used.  Please wait and enter the next value shown in your authenticator app.'

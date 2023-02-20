@@ -44,7 +44,7 @@ class RegistrationView(FormView):
       user_registration.send(sender=request.user.__class__, request=request, email=form.user.email, activation_id=form.activation_id)
       return HttpResponseRedirect(reverse(self.success_page), self.response_dict)
     else:
-      form_errors = json.loads(form.errors.as_json()) # as_data() ddoesn't include the code
+      form_errors = json.loads(form.errors.as_json()) # as_data() doesn't include the code
 
       # if an account has already been activated don't show the other errors
       if 'username' in form_errors:
