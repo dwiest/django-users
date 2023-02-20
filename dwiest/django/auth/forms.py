@@ -7,27 +7,41 @@ from ..users.conf import settings
 import pyotp
 
 class AuthenticationForm(forms.AuthenticationForm):
+
+  CLASS = 'class'
+  SIZE = 'size'
+  MFA_TOKEN = 'mfa_token'
+  MFA_TOKEN_FIELD = 'mfa_token'
+  INVALID_MFA_TOKEN = 'invalid_mfa_token'
+  REPLAYED_MFA_TOKEN = 'replayed_mfa_token'
+
   mfa_token = CharField(
-    label=_("MFA token"),
-    max_length=6,
-    min_length=6,
+    label=_(settings.USERS_LOGIN_MFA_FIELD_LABEL),
+    max_length=settings.USERS_MFA_FIELD_MAX_LENGTH,
+    min_length=settings.USERS_MFA_FIELD_MIN_LENGTH,
     required=False,
-    widget=NonstickyTextInput(attrs={'size': 6}))
+    widget=NonstickyTextInput(
+      attrs={
+        CLASS: settings.USERS_MFA_FIELD_CLASS,
+        SIZE: 6,
+        }
+      )
+    )
 
   forms.AuthenticationForm.error_messages.update({
-    'invalid_mfa_token': _(
-      "The MFA token you entered is not correct."
+    INVALID_MFA_TOKEN: _(
+      settings.USERS_LOGIN_INVALID_MFA_TOKEN_ERROR,
     ),
-    'replayed_mfa_token': _(
-      "The MFA token you entered has already been used.Please wait and enter the next value shown in your authenticator app."
+    REPLAYED_MFA_TOKEN: _(
+      settings.USERS_LOGIN_REPLAYED_MFA_TOKEN_ERROR,
     ),
   })
 
   def clean(self):
     super().clean()
-    mfa_token = self.cleaned_data.get('mfa_token')
+    mfa_token = self.cleaned_data.get(self.MFA_TOKEN_FIELD)
 
-    if getattr(settings, 'USERS_MFA_ACCEPT_ANY_VALUE', False) == True:
+    if settings.USERS_MFA_ACCEPT_ANY_VALUE == True:
       print("!WARNING! MFA accepting any value")
       mfa_token = None
 
@@ -38,10 +52,10 @@ class AuthenticationForm(forms.AuthenticationForm):
 
         if mfa_token != totp.now():
           print("invalid_mfa_token")
-          raise self.get_invalid_mfa_token_error()
+          raise AuthenticationForm.get_invalid_mfa_token_error()
         elif mfa_token == user_mfa.last_value:
           print("replayed_mfa_token")
-          raise self.get_replayed_mfa_token_error()
+          raise AuthenticationForm.get_replayed_mfa_token_error()
         else:
           print("valid_mfa_token")
           user_mfa.last_value = mfa_token
@@ -49,18 +63,20 @@ class AuthenticationForm(forms.AuthenticationForm):
 
       except ObjectDoesNotExist:
           print("No MFA object for user")
-          raise self.get_invalid_mfa_token_error()
+          raise AuthenticationForm.get_invalid_mfa_token_error()
 
     return self.cleaned_data
 
-  def get_invalid_mfa_token_error(self):
+  @classmethod
+  def get_invalid_mfa_token_error(cls):
     return ValidationError(
-      self.error_messages['invalid_mfa_token'],
-      code='invalid_mfa_token',
+      cls.error_messages[cls.INVALID_MFA_TOKEN],
+      code=cls.INVALID_MFA_TOKEN,
     )
 
-  def get_replayed_mfa_token_error(self):
+  @classmethod
+  def get_replayed_mfa_token_error(cls):
     return ValidationError(
-      self.error_messages['replayed_mfa_token'],
-      code='replayed_mfa_token',
+      cls.error_messages[cls.REPLAYED_MFA_TOKEN],
+      code=cls.REPLAYED_MFA_TOKEN,
     )
