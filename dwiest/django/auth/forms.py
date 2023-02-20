@@ -33,12 +33,10 @@ class AuthenticationForm(forms.AuthenticationForm):
     )
 
   forms.AuthenticationForm.error_messages.update({
-    Errors.MFA_TOKEN_INVALID: _(
-      settings.USERS_LOGIN_MFA_TOKEN_INVALID_ERROR,
-    ),
-    Errors.MFA_TOKEN_REPLAYED: _(
-      settings.USERS_LOGIN_MFA_TOKEN_REPLAYED_ERROR,
-    ),
+    Errors.MFA_TOKEN_INVALID:
+      _(settings.USERS_LOGIN_MFA_TOKEN_INVALID_ERROR),
+    Errors.MFA_TOKEN_REPLAYED:
+      _(settings.USERS_LOGIN_MFA_TOKEN_REPLAYED_ERROR),
   })
 
   def clean(self):
