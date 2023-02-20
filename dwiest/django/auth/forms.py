@@ -54,10 +54,10 @@ class AuthenticationForm(forms.AuthenticationForm):
 
         if mfa_token != totp.now():
           print("invalid_mfa_token")
-          raise AuthenticationForm.get_invalid_mfa_token_error()
+          raise AuthenticationForm.get_mfa_token_invalid_error()
         elif mfa_token == user_mfa.last_value:
           print("replayed_mfa_token")
-          raise AuthenticationForm.get_replayed_mfa_token_error()
+          raise AuthenticationForm.get_mfa_token_replayed_error()
         else:
           print("valid_mfa_token")
           user_mfa.last_value = mfa_token
@@ -65,19 +65,19 @@ class AuthenticationForm(forms.AuthenticationForm):
 
       except ObjectDoesNotExist:
           print("No MFA object for user")
-          raise AuthenticationForm.get_invalid_mfa_token_error()
+          raise AuthenticationForm.get_mfa_token_invalid_error()
 
     return self.cleaned_data
 
   @classmethod
-  def get_invalid_mfa_token_error(cls):
+  def get_mfa_token_invalid_error(cls):
     return ValidationError(
       cls.error_messages[Errors.MFA_TOKEN_INVALID],
       code=Errors.MFA_TOKEN_INVALID,
     )
 
   @classmethod
-  def get_replayed_mfa_token_error(cls):
+  def get_mfa_token_replayed_error(cls):
     return ValidationError(
       cls.error_messages[Errors.MFA_TOKEN_REPLAYED],
       code=Errors.MFA_TOKEN_REPLAYED,
