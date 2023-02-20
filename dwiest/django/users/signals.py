@@ -11,7 +11,7 @@ password_changed = Signal()
 @receiver(user_registration)
 def user_registration_callback(sender, **kwargs):
   print("user_registration_callback")
-  if getattr(settings, 'EMAIL_SEND', False) == True:
+  if settings.EMAIL_SEND == True:
     request = kwargs['request']
     domain = 'https://' + request.META['HTTP_HOST']
     recipients = [kwargs['email']]
@@ -22,7 +22,7 @@ def user_registration_callback(sender, **kwargs):
 @receiver(user_registration_confirmed)
 def user_registration_confirmed_callback(sender, **kwargs):
   print("user_registration_confirmed_callback")
-  if getattr(settings, 'EMAIL_SEND', False) == True:
+  if settings.EMAIL_SEND == True:
     recipients = [kwargs['email']]
     msg = generate_account_activation_email(recipients)
     send_email(recipients, msg.as_string())
@@ -30,7 +30,7 @@ def user_registration_confirmed_callback(sender, **kwargs):
 @receiver(resend_registration_email)
 def resend_registration_email_callback(sender, **kwargs):
   print("resend_registration_email_callback")
-  if getattr(settings, 'EMAIL_SEND', False) == True:
+  if settings.EMAIL_SEND == True:
     request = kwargs['request']
     domain = 'https://' + request.META['HTTP_HOST']
     recipients = [kwargs['email']]
@@ -41,7 +41,7 @@ def resend_registration_email_callback(sender, **kwargs):
 @receiver(password_reset_request)
 def password_reset_callback(sender, **kwargs):
   print("password_reset_callback")
-  if getattr(settings, 'EMAIL_SEND', False) == True:
+  if settings.EMAIL_SEND == True:
     request = kwargs['request']
     domain = 'https://' + request.META['HTTP_HOST']
     recipients = [kwargs['email']]
@@ -52,7 +52,7 @@ def password_reset_callback(sender, **kwargs):
 @receiver(password_changed)
 def password_changed_callback(sender, **kwargs):
   print("password_changed_callback")
-  if getattr(settings, 'EMAIL_SEND', False) == True:
+  if settings.EMAIL_SEND == True:
     recipients = [kwargs['email']]
     msg = generate_password_changed_email(recipients)
     send_email(recipients, msg.as_string())

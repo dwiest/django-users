@@ -202,7 +202,7 @@ class RegistrationResendView(TemplateView):
       request.session[self.fail_page] = True
       return HttpResponseRedirect(reverse(self.fail_page), self.response_dict)
 
-    elif getattr(settings, 'USERS_REGISTRATION_ALLOW_EMAIL_RESEND', False) != True:
+    elif settings.USERS_REGISTRATION_ALLOW_EMAIL_RESEND != True:
       messages.error(request, 'Re-sending of registration emails is not allowed.')
       request.session[self.fail_page] = True
       return HttpResponseRedirect(reverse(self.fail_page), self.response_dict)

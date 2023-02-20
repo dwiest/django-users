@@ -299,8 +299,8 @@ class RegistrationResendForm(forms.Form):
 
   def save(self):
     # Update the created_at timestamp
-    if getattr(settings, 'USE_TZ', True) == True:
-      timezone = pytz.timezone(getattr(settings, 'TIME_ZONE', 'UTC'))
+    if settings.USE_TZ == True:
+      timezone = pytz.timezone(settings.TIME_ZONE)
       self.activation_id.created_at = datetime.datetime.now(tz=timezone)
 
     else:

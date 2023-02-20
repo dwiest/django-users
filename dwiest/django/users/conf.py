@@ -12,6 +12,7 @@ class UsersAppConf(AppConf):
   '''
 
   EMAIL_FIELD_MAX_LENGTH = 50
+  EMAIL_SEND = True
 
   ''' Account activation '''
   ACCOUNT_ACTIVATION_EMAIL_SUBJECT = 'Account Activated'
