@@ -15,19 +15,34 @@ import pytz
 
 
 class RegistrationForm(UserCreationForm):
-  UserCreationForm.base_fields['password2'].label = 'Confirm password'
 
-  username = forms.EmailField(label='Email',initial='',max_length=50)
+  USER_ALREADY_ACTIVATED = 0
+  USER_ALREADY_EXISTS = 1
+
+  USERNAME_FIELD = 'username'
+  PASSWORD1_FIELD = 'password1'
+  PASSWORD2_FIELD = 'password2'
+
+  user = None
+
+  UserCreationForm.base_fields[PASSWORD2_FIELD].label = \
+    settings.USERS_REGISTRATION_PASSWORD2_FIELD_LABEL
+
+  username = forms.EmailField(
+    label=settings.USERS_REGISTRATION_EMAIL_FIELD_LABEL,
+    initial='',
+    max_length=settings.USERS_REGISTRATION_EMAIL_FIELD_MAX_LENGTH,
+    )
 
   UserCreationForm.error_messages.update({
-    'user_already_activated':
-      _("That account has already been activated."),
-    'user_already_exists':
-      _("That email address has already been registered."),
+    USER_ALREADY_ACTIVATED:
+      _(settings.USERS_REGISTRATION_USER_ALREADY_ACTIVATED_ERROR),
+    USER_ALREADY_EXISTS:
+      _(settings.USERS_REGISTRATION_USER_ALREADY_EXISTS_ERROR),
     })
 
   def clean(self):
-    username = self.cleaned_data['username']
+    username = self.cleaned_data[self.USERNAME_FIELD]
 
     try:
       # save a reference to the user, used in save()
@@ -36,35 +51,46 @@ class RegistrationForm(UserCreationForm):
       # activation_id should not exist, but maybe it does?
       try:
         self.activation_id = ActivationId.objects.get(user_id=self.user.id)
+
       except ObjectDoesNotExist:
         pass
 
-      if getattr(settings, 'USERS_REGISTRATION_ALLOW_ALREADY_ACTIVE', False) == True:
+      if settings.USERS_REGISTRATION_ALLOW_ALREADY_ACTIVE == True:
         print("!WARNING! allowing pre-existing user")
+
       else:
         if self.user.is_active == True:
-          raise forms.ValidationError(
-            self.error_messages['user_already_activated'],
-            code='user_already_activated',)
+          raise RegistrationForm.get_user_already_activated_error()
+
         else:
-          raise forms.ValidationError(
-            self.error_messages['user_already_exists'],
-            code='user_already_exists',)
+          raise RegistrationForm.get_user_already_exists_error()
 
     except ObjectDoesNotExist: # new user
       pass
 
+  @classmethod
+  def get_user_already_activated_error(cls):
+    return forms.ValidationError(
+      cls.error_messages[cls.USER_ALREADY_ACTIVATED],
+      code=cls.USER_ALREADY_ACTIVATED)
+
+  @classmethod
+  def get_user_already_exists_error(cls):
+    return forms.ValidationError(
+      cls.error_messages[cls.USER_ALREADY_EXISTS],
+      code=cls.USER_ALREADY_EXISTS)
+
   def save(self):
-    username = self.cleaned_data.get('username')
-    email = self.cleaned_data.get('username')
-    password = self.cleaned_data.get('password1')
+    username = self.cleaned_data[self.USERNAME_FIELD]
+    email = self.cleaned_data[self.USERNAME_FIELD]
+    password = self.cleaned_data[self.PASSWORD1_FIELD]
 
     # Create an account if one doesn't already exist
-    if getattr(self, 'user', None) == None:
+    if not self.user:
       self.user = User.objects.create_user(username, email, password)
+
     else:
       self.user.password = make_password(password)
-      pass
 
     self.user.is_active=False
     self.user.save()
@@ -72,11 +98,14 @@ class RegistrationForm(UserCreationForm):
     # Check if an activation record exists (it shouldn't); prevents multiple per-user
     try:
       activation_id = ActivationId.objects.get(user_id=self.user.id)
+
       # Update the timestamp if it does exist
       if settings.USE_TZ:
         activation_id.created_at = datetime.datetime.now(tz=pytz.timezone(settings.TIME_ZONE))
+
       else:
         activation_id.created_at = datetime.datetime.now()
+
     except ObjectDoesNotExist:
       # Create an activation id record if one doesn't exist (it shouldn't)
       activation_id = ActivationId(value=uuid.uuid4(), user_id=self.user.id)
@@ -86,63 +115,95 @@ class RegistrationForm(UserCreationForm):
 
 
 class RegistrationConfirmForm(forms.Form):
+
+  USER_INVALID = 0
+  USER_ALREADY_EXISTS = 1
+  ACTIVATION_ID_EXPIRED = 2
+  ACTIVATION_ID_INVALID = 3
+
+  ACTIVATION_ID_FIELD = 'activation_id'
+
   activation_id = forms.CharField(
-    label=_('Activation Id'),
+    label=_(settings.USERS_REGISTRATION_ACTIVATION_ID_FIELD_LABEL),
     required=True,
     widget=forms.HiddenInput(),
     )
 
   error_messages = {
-    'user_invalid':
-      _("Your account could not be located."),
-    'user_already_exists':
-      _("Your account has already been activated."),
-    'activation_id_expired': 
-      _("Your account registration link has expired."),
-    'activation_id_invalid': 
-      _("The activation id is invalid."),
+    USER_INVALID:
+      _(settings.USERS_REGISTRATION_USER_INVALID_ERROR),
+    USER_ALREADY_EXISTS:
+      _(settings.USERS_REGISTRATION_USER_ALREADY_EXISTS_ERROR),
+    ACTIVATION_ID_EXPIRED:
+      _(settings.USERS_REGISTRATION_ACTIVATION_ID_EXPIRED_ERROR),
+    ACTIVATION_ID_INVALID:
+      _(settings.USERS_REGISTRATION_ACTIVATION_ID_INVALID_ERROR),
     }
 
   def clean_activation_id(self):
-    activation_id = self.cleaned_data['activation_id']
+    activation_id = self.cleaned_data[self.ACTIVATION_ID_FIELD]
 
     try:
       self.activation_id = ActivationId.objects.get(value=activation_id)
+
     except ObjectDoesNotExist:
-      raise forms.ValidationError(
-        self.error_messages['activation_id_invalid'],
-        code='activation_id_invalid',)
+      raise RegistrationConfirmForm.get_activation_id_invalid_error()
 
     # check if the activation_id has expired
-    if getattr(settings, 'USERS_ACTIVATION_ID_ALLOW_EXPIRED', False) == True:
+    if settings.USERS_ACTIVATION_ID_ALLOW_EXPIRED == True:
       print("!WARNING! Ignoring expired activation ids")
+
     else:
       if settings.USE_TZ:
-        expires_at = datetime.datetime.now(tz=pytz.timezone(settings.TIME_ZONE)) - datetime.timedelta(days=1)
+        expires_at = datetime.datetime.now(tz=pytz.timezone(settings.TIME_ZONE)) - datetime.timedelta(days=settings.REGISTRATION_EXPIRATION_DAYS)
       else:
-        expires_at = datetime.datetime.now() - datetime.timedelta(days=1)
+        expires_at = datetime.datetime.now() - datetime.timedelta(days=settings.REGISTRATION_EXPIRATION_DAYS)
       if self.activation_id.created_at < expires_at:
-        raise ValidationError(
-          self.error_messages['activation_id_expired'],
-          code='activation_id_expired',)
+        raise RegistrationConfirmForm.get_activation_id_expired_error()
 
     return activation_id
+
+  @classmethod
+  def get_activation_id_invalid_error(cls):
+    return forms.ValidationError(
+      cls.error_messages[cls.ACTIVATION_ID_INVALID],
+      code=cls.ACTIVATION_ID_INVALID,
+      )
+
+  @classmethod
+  def get_activation_id_expired_error(cls):
+    return ValidationError(
+      cls.error_messages[cls.ACTIVATION_ID_EXPIRED],
+      code=cls.ACTIVATION_ID_EXPIRED
+      )
 
   def clean(self):
     if hasattr(self, 'activation_id'):
       try:
         self.user = User.objects.get(id=self.activation_id.user_id)
-      except ObjectDoesNotExist:
-        raise ValidationError(
-          self.error_messages['user_invalid'],
-          code='user_invalid',)
 
-    if getattr(settings, 'USERS_REGISTRATION_ALLOW_ALREADY_ACTIVE', False) == True:
+      except ObjectDoesNotExist:
+        raise RegistrationConfirmForm.get_user_invalid_error()
+
+    if settings.USERS_REGISTRATION_ALLOW_ALREADY_ACTIVE == True:
       print("!WARNING! allowing pre-existing user")
+
     elif self.user.is_active == True:
-        raise ValidationError(
-          self.error_messages['user_already_exists'],
-          code='user_already_exists',)
+        raise RegistrationConfirmForm.get_user_already_exists_error()
+
+  @classmethod
+  def get_user_invalid_error(cls):
+    return ValidationError(
+      cls.error_messages[cls.USER_INVALID],
+      code=cls.USER_INVALID
+      )
+
+  @classmethod
+  def get_user_already_exists_error(cls):
+    return ValidationError(
+      cls.error_messages[cls.USER_ALREADY_EXISTS],
+      code=cls.USER_ALREADY_EXISTS
+      )
 
   def save(self):
     # mark the user as active
@@ -150,7 +211,7 @@ class RegistrationConfirmForm(forms.Form):
     self.user.save()
 
     # delete the activation id record
-    if getattr(settings, 'USERS_ACTIVATION_ID_DO_NOT_DELETE', False) == True:
+    if settings.USERS_ACTIVATION_ID_DO_NOT_DELETE == True:
       print("!WARNING! Not deleting activation id")
     else:
       self.activation_id.delete()
@@ -158,63 +219,92 @@ class RegistrationConfirmForm(forms.Form):
 
 class RegistrationResendForm(forms.Form):
 
+  USER_INVALID = 0
+  USER_ALREADY_ACTIVE = 1
+  ACTIVATION_ID_EXPIRED = 2
+  ACTIVATION_ID_INVALID = 3
+  RESEND_NOT_ALLOWED = 4
+
+  ACTIVATION_ID_FIELD = 'activation_id'
+
   activation_id = forms.CharField(
-    label=_('Activation Id'),
+    label=_(settings.USERS_REGISTRATION_ACTIVATION_ID_FIELD_LABEL),
     required=True,
     widget=forms.HiddenInput(),
     )
 
   error_messages = {
-    'username_invalid':
-      _("Your account could not be located."),
-    'username_already_active':
-      _("Your account has already been activated."),
-    'activation_id_expired':
-      _("Your account registration link has expired."),
-    'activation_id_invalid':
-      _("The activation id is invalid."),
-    'resend_not_allowed':
-      _("Re-sending of registration emails is not allowed."),
+    USER_INVALID:
+      _(settings.USERS_REGISTRATION_USER_INVALID_ERROR),
+    USER_ALREADY_ACTIVE:
+      _(settings.USERS_REGISTRATION_USER_ALREADY_ACTIVATED_ERROR),
+    ACTIVATION_ID_EXPIRED:
+      _(settings.USERS_REGISTRATION_ACTIVATION_ID_EXPIRED_ERROR),
+    ACTIVATION_ID_INVALID:
+      _(settings.USERS_REGISTRATION_ACTIVATION_ID_INVALID_ERROR),
+    RESEND_NOT_ALLOWED:
+      _(settings.USERS_REGISTRATION_RESEND_NOT_ALLOWED_ERROR),
     }
 
   def clean_activation_id(self):
-    activation_id = self.cleaned_data['activation_id']
+    activation_id = self.cleaned_data[self.ACTIVATION_ID_FIELD]
 
     try:
       self.activation_id = ActivationId.objects.get(value=activation_id)
+
     except ObjectDoesNotExist:
-      raise forms.ValidationError(
-        self.error_messages['activation_id_invalid'],
-        code='activation_id_invalid',)
+      raise RegistrationResendForm.get_activation_id_invalid_error()
 
     return activation_id
 
+  @classmethod
+  def get_activation_id_invalid_error(cls):
+    return forms.ValidationError(
+      cls.error_messages[cls.ACTIVATION_ID_INVALID],
+      code=cls.ACTIVATION_ID_INVALID
+      )
+
+  @classmethod
+  def get_resend_not_allowed_error(cls):
+    return ValidationError(
+      cls.error_messages[cls.RESEND_NOT_ALLOWED],
+      code=cls.RESEND_NOT_ALLOWED)
+
+  @classmethod
+  def get_user_invalid_error(cls):
+    return ValidationError(
+      cls.error_messages[cls.USER_INVALID],
+      code=cls.USER_INVALID,)
+
+  @classmethod
+  def get_user_already_active_error(cls):
+    return ValidationError(
+      cls.error_messages[cls.USER_ALREADY_ACTIVE],
+      code=cls.USER_ALREADY_ACTIVE)
+
   def clean(self):
-    if getattr(settings, 'USERS_REGISTRATION_ALLOW_EMAIL_RESEND', False) != True:
-      raise ValidationError(
-        self.error_messages['resend_not_allowed'],
-        code='resend_not_allowed')
+    if settings.USERS_REGISTRATION_ALLOW_EMAIL_RESEND != True:
+      raise RegistrationResendForm.get_resend_not_allowed_error()
 
     # Check that the user is not already active
     try:
       self.user = User.objects.get(id=self.activation_id.user_id)
-    except ObjectDoesNotExist:
-      raise ValidationError(
-        self.error_messages['username_invalid'],
-        code='username_invalid',)
 
-    if getattr(settings, 'USERS_REGISTRATION_ALLOW_ALREADY_ACTIVE', False) == True:
+    except ObjectDoesNotExist:
+      raise RegistrationResendForm.get_user_invalid_error()
+
+    if settings.USERS_REGISTRATION_ALLOW_ALREADY_ACTIVE == True:
       print("!WARNING! allowing pre-existing user")
+
     elif self.user.is_active == True:
-      raise ValidationError(
-        self.error_messages['username_already_active'],
-        code='username_already_active',)
+      raise RegistrationResendForm.get_user_already_active_error()
 
   def save(self):
     # Update the created_at timestamp
     if getattr(settings, 'USE_TZ', True) == True:
       timezone = pytz.timezone(getattr(settings, 'TIME_ZONE', 'UTC'))
       self.activation_id.created_at = datetime.datetime.now(tz=timezone)
+
     else:
        self.activation_id.created_at = datetime.datetime.now()
 
@@ -222,29 +312,48 @@ class RegistrationResendForm(forms.Form):
 
 
 class SendPasswordResetForm(forms.Form):
-  email = forms.EmailField(label='Email',initial='',max_length=50)
+
+  USER_NOT_FOUND = 0
+
+  EMAIL_FIELD = 'email'
 
   error_messages = {
-    'user_not_found':
-      _("A user with that email address could not be located."),
+    USER_NOT_FOUND:
+      _(settings.USERS_PASSWORD_RESET_USER_NOT_FOUND_ERROR),
     }
 
+  email = forms.EmailField(
+    label=settings.USERS_PASSWORD_RESET_EMAIL_FIELD_LABEL,
+    initial='',
+    max_length=settings.USERS_EMAIL_FIELD_MAX_LENGTH,
+    widget=NonstickyTextInput(
+      attrs = {
+      'class': settings.USERS_PASSWORD_RESET_EMAIL_FIELD_CLASS,
+      }
+    )
+  )
+
   def clean(self):
-    email = self.cleaned_data.get('email')
+    email = self.cleaned_data[self.EMAIL_FIELD]
+
     try:
       user = User.objects.get(username=email, is_active=True)
       self.user = user
+
     except ObjectDoesNotExist:
       raise self.get_invalid_user_error()
 
     # Re-use an activation id record it exists; don't allows multiple per-user
     try:
       activation_id = ActivationId.objects.get(user_id=user.id)
+
       # Update the timestamp
       if settings.USE_TZ:
         activation_id.created_at = datetime.datetime.now(tz=pytz.timezone(settings.TIME_ZONE))
+
       else:
         activation_id.created_at = datetime.datetime.now()
+
     except ObjectDoesNotExist:
       # No record found, create a new one
       activation_id = ActivationId(user_id=user.id, value=uuid.uuid4())
@@ -252,111 +361,145 @@ class SendPasswordResetForm(forms.Form):
     activation_id.save()
     self.activation_id = activation_id
 
-  def get_invalid_user_error (self):
+  @classmethod
+  def get_invalid_user_error(cls):
     return ValidationError(
-      self.error_messages['user_not_found'],
-      code='user_not_found',
-    )
+      cls.error_messages[cls.USER_NOT_FOUND],
+      code=cls.USER_NOT_FOUND,
+      )
 
 
 class PasswordResetConfirmForm(authForms.PasswordChangeForm):
 
+  NEW_PASSWORD1_FIELD = 'new_password1'
+  NEW_PASSWORD2_FIELD = 'new_password2'
+  ACTIVATION_ID_FIELD = 'activation_id'
+  MFA_TOKEN_FIELD = 'mfa_token'
+
+  PASSWORD_MISMATCH = 0
+  INVALID_MFA_TOKEN = 1
+  REPLAYED_MFA_TOKEN = 2
+  ACTIVATION_ID_EXPIRED = 3
+  ACTIVATION_ID_INVALID = 4
+
   activation_id = forms.CharField(
-    label=_('Activation Id'),
+    label=_(settings.USERS_PASSWORD_RESET_ACTIVATION_ID_FIELD_LABEL),
     required=True,
     widget=forms.HiddenInput(),
     )
 
   mfa_token = forms.CharField(
-    label=_("MFA Token"),
-    max_length=6,
-    min_length=6,
+    label=_(settings.USERS_PASSWORD_RESET_MFA_TOKEN_LABEL),
+    max_length=settings.USERS_MFA_FIELD_MAX_LENGTH,
+    min_length=settings.USERS_MFA_FIELD_MIN_LENGTH,
     required=False,
     widget=NonstickyTextInput(attrs={'size': 6}))
 
-  old_password = None
+  old_password = None # clear existing field
 
-  authForms.PasswordChangeForm.base_fields['new_password1'].label = 'New Password'
-  authForms.PasswordChangeForm.base_fields['new_password2'].label = 'Confirm Password'
+  authForms.PasswordChangeForm.base_fields[NEW_PASSWORD1_FIELD].label = \
+    settings.USERS_PASSWORD_RESET_NEW_PASSWORD1_LABEL
+
+  authForms.PasswordChangeForm.base_fields[NEW_PASSWORD2_FIELD].label = \
+    settings.USERS_PASSWORD_RESET_NEW_PASSWORD2_LABEL
 
   authForms.PasswordChangeForm.error_messages.update({
-    'password_mismatch':
-      _("The two password fields didn't match."),
-    'invalid_mfa_token': _(
-      "The MFA token you entered is not correct."
-    ),
-    'replayed_mfa_token': _(
-      "The MFA token you entered has already been used.  Please wait and enter the next value shown in your authenticator app."
-    ),
-    'activation_id_expired': _(
-      "The activation id has expired.  Please request a new pasword reset email."
-    ),
-    'activation_id_invalid': _(
-      "The activation id is invalid."
-    ),
-  })
+    PASSWORD_MISMATCH:
+      _(settings.USERS_PASSWORD_RESET_PASSWORD_MISMATCH_ERROR),
+    INVALID_MFA_TOKEN:
+      _(settings.USERS_PASSWORD_RESET_INVALID_MFA_TOKEN_ERROR),
+    REPLAYED_MFA_TOKEN:
+      _(settings.USERS_PASSWORD_RESET_REPLAYED_MFA_TOKEN_ERROR),
+    ACTIVATION_ID_EXPIRED:
+      _(settings.USERS_PASSWORD_RESET_ACTIVATION_ID_EXPIRED_ERROR),
+    ACTIVATION_ID_INVALID:
+      _(settings.USERS_PASSWORD_RESET_ACTIVATION_ID_INVALID_ERROR),
+    })
+
+  @classmethod
+  def get_activation_id_invalid_error(cls):
+    return forms.ValidationError(
+      cls.error_messages[cls.ACTIVATION_ID_INVALID],
+      code=cls.ACTIVATION_ID_INVALID
+      )
+
+  @classmethod
+  def get_activation_id_expired_error(cls):
+    return ValidationError(
+      cls.error_messages[cls.ACTIVATION_ID_EXPIRED],
+      code=cls.ACTIVATION_ID_EXPIRED
+      )
 
   def clean_activation_id(self):
-    id = self.cleaned_data.get("activation_id")
+    id = self.cleaned_data[self.ACTIVATION_ID_FIELD]
+
     try:
       self.activation_id = ActivationId.objects.get(value=id)
       self.user = User.objects.get(id=self.activation_id.user_id, is_active=True)
+
     except ObjectDoesNotExist:
-      raise forms.ValidationError(
-        self.error_messages['activation_id_invalid'],
-        code='activation_id_invalid',)
+      raise PasswordResetConfirmForm.get_activation_id_invalid_error()
+
     # check if the activation_id has expired
-    if getattr(settings, 'USERS_ACTIVATION_ID_ALLOW_EXPIRED', False) == True:
+    if settings.USERS_ACTIVATION_ID_ALLOW_EXPIRED == True:
       print("!WARNING! Ignoring expired activation ids")
+
     else:
       if settings.USE_TZ:
-        expires_at = datetime.datetime.now(tz=pytz.timezone(settings.TIME_ZONE)) - datetime.timedelta(days=1)
+        expires_at = datetime.datetime.now(tz=pytz.timezone(settings.TIME_ZONE)) - datetime.timedelta(days=settings.USERS_PASSWORD_RESET_EXPIRATION_DAYS)
+
       else:
-        expires_at = datetime.datetime.now() - datetime.timedelta(days=1)
+        expires_at = datetime.datetime.now() - datetime.timedelta(days=settings.USERS_PASSWORD_RESET_EXPIRATION_DAYS)
+
       if self.activation_id.created_at < expires_at:
-        raise ValidationError(
-          self.error_messages['activation_id_expired'],
-          code='activation_id_expired',)
+        raise PasswordResetConfirmForm.get_activation_id_expired_error()
+
     return id
 
   def clean_mfa_token(self):
-    mfa_token = self.cleaned_data.get('mfa_token')
+    mfa_token = self.cleaned_data[self.MFA_TOKEN_FIELD]
 
-    if getattr(settings, 'USERS_MFA_ACCEPT_ANY_VALUE', False) == True:
+    if settings.USERS_MFA_ACCEPT_ANY_VALUE == True:
       print("!WARNING! MFA accepting any value")
       mfa_token = None
 
     if mfa_token != None:
+
       try:
         user_mfa = MfaModel.objects.get(user_id=self.user.id)
         totp = pyotp.TOTP(user_mfa.secret_key)
 
         if mfa_token != totp.now():
-          raise self.get_invalid_mfa_token_error()
+          raise PasswordResetConfirmForm.get_invalid_mfa_token_error()
+
         elif mfa_token == user_mfa.last_value:
-          raise self.get_replayed_mfa_token_error()
+          raise PasswordResetConfirmForm.get_replayed_mfa_token_error()
+
         else:
           user_mfa.last_value = mfa_token
           user_mfa.save()
 
       except ObjectDoesNotExist:
-          raise self.get_invalid_mfa_token_error()
+        raise PasswordResetConfirmForm.get_invalid_mfa_token_error()
+
     return mfa_token
 
-  def get_invalid_mfa_token_error(self):
+  @classmethod
+  def get_invalid_mfa_token_error(cls):
     return ValidationError(
-      self.error_messages['invalid_mfa_token'],
-      code='invalid_mfa_token',
-    )
+      cls.error_messages[cls.INVALID_MFA_TOKEN],
+      code=cls.INVALID_MFA_TOKEN
+      )
 
-  def get_replayed_mfa_token_error(self):
+  @classmethod
+  def get_replayed_mfa_token_error(cls):
     return ValidationError(
-      self.error_messages['replayed_mfa_token'],
-      code='replayed_mfa_token',
-    )
+      cls.error_messages[cls.REPLAYED_MFA_TOKEN],
+      code=cls.REPLAYED_MFA_TOKEN
+      )
 
   def save(self):
-    if getattr(settings, 'USERS_ACTIVATION_ID_DO_NOT_DELETE', False) == True:
+    if settings.USERS_ACTIVATION_ID_DO_NOT_DELETE == True:
       print("!WARNING! Not deleting activation id")
     else:
       self.activation_id.delete()
@@ -365,35 +508,49 @@ class PasswordResetConfirmForm(authForms.PasswordChangeForm):
 
 
 class PasswordChangeForm(authForms.PasswordChangeForm):
+
+  PASSWORD_MISMATCH = 0
+  INVALID_USER = 1
+  INVALID_MFA_TOKEN = 2
+  REPLAYED_MFA_TOKEN = 3
+
+  OLD_PASSWORD_FIELD = 'old_password'
+  NEW_PASSWORD1_FIELD = 'new_password1'
+  NEW_PASSWORD2_FIELD = 'new_password2'
+  MFA_TOKEN_FIELD = 'mfa_token'
+
   mfa_token = forms.CharField(
-    label=_("MFA Token"),
-    max_length=6,
-    min_length=6,
+    label=_(settings.USERS_PASSWORD_CHANGE_MFA_TOKEN_FIELD_LABEL),
+    max_length=settings.USERS_MFA_FIELD_MAX_LENGTH,
+    min_length=settings.USERS_MFA_FIELD_MIN_LENGTH,
     required=False,
     widget=NonstickyTextInput(attrs={'size': 6}))
 
-  authForms.PasswordChangeForm.base_fields['old_password'].label = 'Password'
-  authForms.PasswordChangeForm.base_fields['new_password1'].label = 'New Password'
-  authForms.PasswordChangeForm.base_fields['new_password2'].label = 'Confirm Password'
+  authForms.PasswordChangeForm.base_fields[OLD_PASSWORD_FIELD].label = \
+    settings.USERS_PASSWORD_CHANGE_OLD_PASSWORD_FIELD_LABEL
+
+  authForms.PasswordChangeForm.base_fields[NEW_PASSWORD1_FIELD].label = \
+    settings.USERS_PASSWORD_CHANGE_PASSWORD1_FIELD_LABEL
+
+  authForms.PasswordChangeForm.base_fields[NEW_PASSWORD2_FIELD].label = \
+    settings.USERS_PASSWORD_CHANGE_PASSWORD2_FIELD_LABEL
 
   authForms.PasswordChangeForm.error_messages.update({
-    'password_mismatch':
-      _("The two password fields didn't match."),
-    'invalid_user':
-      _("Your password could not be updated."),
-    'invalid_mfa_token': _(
-      "The MFA token you entered is not correct."
-    ),
-    'replayed_mfa_token': _(
-      "The MFA token you entered has already been used.  Please wait and enter the next value shown in your authenticator app."
-    ),
-  })
+    PASSWORD_MISMATCH:
+      _(settings.USERS_PASSWORD_CHANGE_PASSWORD_MISMATCH_ERROR),
+    INVALID_USER:
+      _(settings.USERS_PASSWORD_CHANGE_INVALID_USER_ERROR),
+    INVALID_MFA_TOKEN:
+      _(settings.USERS_PASSWORD_CHANGE_INVALID_MFA_TOKEN_ERROR),
+    REPLAYED_MFA_TOKEN:
+      _(settings.USERS_PASSWORD_CHANGE_REPLAYED_MFA_TOKEN_ERROR),
+    })
 
 
   def clean_mfa_token(self):
-    mfa_token = self.cleaned_data.get('mfa_token')
+    mfa_token = self.cleaned_data[self.MFA_TOKEN_FIELD]
 
-    if getattr(settings, 'USERS_MFA_ACCEPT_ANY_VALUE', False) == True:
+    if settings.USERS_MFA_ACCEPT_ANY_VALUE == True:
       print("!WARNING! MFA accepting any value")
       mfa_token = None
 
@@ -403,25 +560,30 @@ class PasswordChangeForm(authForms.PasswordChangeForm):
         totp = pyotp.TOTP(user_mfa.secret_key)
 
         if mfa_token != totp.now():
-          raise self.get_invalid_mfa_token_error()
+          raise PasswordChangeForm.get_invalid_mfa_token_error()
+
         elif mfa_token == user_mfa.last_value:
-          raise self.get_replayed_mfa_token_error()
+          raise PasswordChangeForm.get_replayed_mfa_token_error()
+
         else:
           user_mfa.last_value = mfa_token
           user_mfa.save()
 
       except ObjectDoesNotExist:
-          raise self.get_invalid_mfa_token_error()
+          raise PasswordChangeForm.get_invalid_mfa_token_error()
+
     return mfa_token
 
-  def get_invalid_mfa_token_error(self):
+  @classmethod
+  def get_invalid_mfa_token_error(cls):
     return ValidationError(
-      self.error_messages['invalid_mfa_token'],
-      code='invalid_mfa_token',
+      cls.error_messages[cls.INVALID_MFA_TOKEN],
+      code=cls.INVALID_MFA_TOKEN,
     )
 
-  def get_replayed_mfa_token_error(self):
+  @classmethod
+  def get_replayed_mfa_token_error(cls):
     return ValidationError(
-      self.error_messages['replayed_mfa_token'],
-      code='replayed_mfa_token',
+      cls.error_messages[cls.REPLAYED_MFA_TOKEN],
+      code=cls.REPLAYED_MFA_TOKEN,
     )
