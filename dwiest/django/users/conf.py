@@ -1,5 +1,6 @@
 from django.conf import settings
 from appconf import AppConf
+import qrcode
 
 class UsersAppConf(AppConf):
 
@@ -115,6 +116,23 @@ class UsersAppConf(AppConf):
   MFA_FIELD_CLASS = 'mfa'
   MFA_FIELD_MAX_LENGTH = 6
   MFA_FIELD_MIN_LENGTH = 6
+  MFA_TOKEN_FIELD_LABEL = 'Token'
+  MFA_SECRET_KEY_MAX_LENGTH = 32
+  MFA_SECRET_KEY_MIN_LENGTH = 32
+  MFA_PASSWORD_FIELD_LABEL = 'Password'
+  MFA_PASSWORD_CLASS = 'password'
+  MFA_PASSWORD_INVALID_ERROR = 'The password you entered is incorrect.'
+  MFA_TOKEN_INVALID_ERROR = 'Invalid token, please try again'
+  MFA_QRCODE_FILL_COLOR = 'black'
+  MFA_QRCODE_BACKGROUND_COLOR = 'white'
+  MFA_QRCODE_IMAGE_FORMAT = 'PNG'
+  MFA_CONFIRM_MESSAGE = 'I want to make my account less secure'
+  MFA_DISABLE_FIELD_LABEL = 'Confirm Text'
+  MFA_CONFIRM_MESSAGE_INVALID = 'Please type the confirmation text.'
+  MFA_QRCODE_VERSION = 1
+  MFA_QRCODE_ERROR_CORRECTION = qrcode.constants.ERROR_CORRECT_H
+  MFA_QRCODE_BOX_SIZE = 5
+  MFA_QRCODE_BORDER = 4
 
   '''
     Password reset settings
