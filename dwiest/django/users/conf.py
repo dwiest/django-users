@@ -46,6 +46,12 @@ class UsersAppConf(AppConf):
   MFA_ENABLED_EMAIL_TEXT = 'dwiest-django-users/email/mfa_enabled.txt'
 
   '''
+    Django page template settings
+  '''
+
+  PAGE_FOOTER = 'dwiest-django-users/footer.html'
+
+  '''
     Activation id settings:
 
       ACTIVATION_ID_ALLOW_EXPIRED - Allow activation ids that have
