@@ -4,6 +4,7 @@
 {% include 'dwiest-django-users/default.css' %}
 {% include 'dwiest-django-users/django-messages.css' %}
 {% include 'dwiest-django-users/footer.css' %}
+{% load tags %}
   <Meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </Head>
 
@@ -29,7 +30,7 @@ If you would like to disable multi-factor authentiction you may do so <A href="{
 
 <Div class="filler"></Div>
 
-<Div class="footer">{% include 'dwiest-django-users/footer.html' %}</Div>
+{% footer %}
 </body>
 
 </html>

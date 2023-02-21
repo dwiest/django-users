@@ -4,6 +4,7 @@
 {% include 'dwiest-django-users/default.css' %}
 {% include 'dwiest-django-users/django-messages.css' %}
 {% include 'dwiest-django-users/footer.css' %}
+{% load tags %}
   <Meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </Head>
 
@@ -25,6 +26,6 @@ Your account was activated.  You may login <A href="{% url 'login' %}">here</A>.
 
 <Div class="filler"></Div>
 
-<Div class="footer">{% include 'dwiest-django-users/footer.html' %}</Div>
+{% footer %}
 </Body>
 </Html>
