@@ -1,9 +1,6 @@
-from django.shortcuts import render
 from django.template.loader import get_template
 from ..conf import settings
 from ..email import generate_email
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 
 def generate_mfa_disabled_email(recipients):
   subject = settings.USERS_MFA_DISABLED_EMAIL_SUBJECT

@@ -3,7 +3,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
-from django.template.context import RequestContext
 from django.views.generic import FormView, TemplateView
 from django.views.generic.base import TemplateResponseMixin
 from .forms import MfaEnableForm, MfaDisableForm

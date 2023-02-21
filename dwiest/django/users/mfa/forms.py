@@ -1,8 +1,8 @@
+import base64
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext as _
 from enum import Enum, auto
-import base64
 from io import BytesIO
 import pyotp
 import qrcode
