@@ -1,11 +1,10 @@
-from django.dispatch import receiver
 from django.shortcuts import render
 from django.template.loader import get_template
 from django.urls import reverse
-from .conf import settings
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import smtplib
+from .conf import settings
 
 def generate_registration_email(recipients, domain, activation_id):
   subject = settings.USERS_REGISTRATION_EMAIL_SUBJECT

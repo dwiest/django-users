@@ -1,5 +1,5 @@
 import datetime
-from django.contrib.auth.forms import UserCreationForm, SetPasswordForm
+from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
@@ -7,12 +7,12 @@ from django import forms
 from django.contrib.auth import forms as authForms
 from django.utils.translation import ugettext, ugettext_lazy as _
 from enum import Enum, auto
-from .conf import settings
-import uuid
-from .mfa import MfaModel, NonstickyTextInput
-from .models import ActivationId
 import pyotp
 import pytz
+import uuid
+from .conf import settings
+from .mfa import MfaModel, NonstickyTextInput
+from .models import ActivationId
 
 class RegistrationForm(UserCreationForm):
 

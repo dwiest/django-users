@@ -1,5 +1,5 @@
-from django.conf import settings
 from appconf import AppConf
+from django.conf import settings
 import qrcode
 
 class UsersAppConf(AppConf):
@@ -7,6 +7,7 @@ class UsersAppConf(AppConf):
   def ready(self):
     from .mfa import signals
     from . import signals
+    from .templatetags import tags
 
   '''
     Email settings

@@ -1,8 +1,6 @@
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.models import User
 from django.contrib import messages
-from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
@@ -10,7 +8,6 @@ from django.views.generic import FormView, TemplateView
 import json
 from .conf import settings
 from .forms import *
-from .models import ActivationId
 from .signals import *
 
 login_page = 'login'
