@@ -37,7 +37,7 @@ class MfaEnableForm(forms.Form):
     widget=NonstickyTextInput(
       attrs={
         'class': settings.USERS_MFA_FIELD_CLASS,
-        'size': '6',
+        'size': settings.USERS_MFA_TOKEN_LENGTH,
         }
       )
     )
@@ -73,15 +73,15 @@ class MfaEnableForm(forms.Form):
     self.user = user
 
     if settings.USERS_MFA_SECRET_KEY:
-      self.initial[self.__class__.Fields.SECRET_KEY] = settings.USERS_MFA_SECRET_KEY
+      self.initial[self.Fields.SECRET_KEY] = settings.USERS_MFA_SECRET_KEY
 
     elif kwargs.get('data'):
-      self.initial[self.__class__.Fields.SECRET_KEY] = kwargs['data'][self.__class__.Fields.SECRET_KEY]
+      self.initial[self.Fields.SECRET_KEY] = kwargs['data'][self.Fields.SECRET_KEY]
 
     else:
-      self.initial[self.__class__.Fields.SECRET_KEY] = pyotp.random_base32()
+      self.initial[self.Fields.SECRET_KEY] = pyotp.random_base32()
 
-    self.totp = pyotp.TOTP(self.initial[self.__class__.Fields.SECRET_KEY])
+    self.totp = pyotp.TOTP(self.initial[self.Fields.SECRET_KEY])
     self.account_name = None
 
     self.mfa_issuer_name = settings.USERS_MFA_ISSUER_NAME
@@ -94,17 +94,17 @@ class MfaEnableForm(forms.Form):
     self.secret_key_image = self.get_qrcode(self.provisioning_uri)
 
   def clean(self):
-    if self.user.check_password(self.cleaned_data[self.__class__.Fields.PASSWORD]) != True:
+    if self.user.check_password(self.cleaned_data[self.Fields.PASSWORD]) != True:
       raise self.get_invalid_password_error()
 
     if settings.USERS_MFA_ACCEPT_ANY_VALUE == True:
       print("!WARNING! MFA accepting any value")
 
-    elif self.cleaned_data[self.__class__.Fields.TOKEN] == self.totp.now():
+    elif self.cleaned_data[self.Fields.TOKEN] == self.totp.now():
       pass
 
     else:
-      raise self.__class__.get_invalid_token_error()
+      raise self.get_invalid_token_error()
 
     return super().clean()
 
@@ -190,18 +190,18 @@ class MfaDisableForm(forms.Form):
     self.user = user
 
   def clean(self):
-    if self.user.check_password(self.cleaned_data[self.__class__.Fields.PASSWORD]) != True:
-      raise self.__class__.get_invalid_password_error()
+    if self.user.check_password(self.cleaned_data[self.Fields.PASSWORD]) != True:
+      raise self.get_invalid_password_error()
 
-    if self.cleaned_data[self.__class__.Fields.DISABLE_MFA] != self.confirm_message:
-      raise self.__class__.get_confirm_message_invalid_error()
+    if self.cleaned_data[self.Fields.DISABLE_MFA] != self.confirm_message:
+      raise self.get_confirm_message_invalid_error()
 
   @classmethod
   def get_password_invalid_error(cls):
     return ValidationError(
       cls.error_messages[cls.Errors.PASSWORD_INVALID],
       code=cls.Errors.PASSWORD_INVALID,
-    )
+      )
 
   @classmethod
   def get_confirm_message_invalid_error(cls):
