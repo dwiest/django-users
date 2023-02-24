@@ -1,6 +1,6 @@
 from django.template.loader import get_template
 from django import template
-from ..conf import settings
+from ...conf import settings
 
 register = template.Library()
 
