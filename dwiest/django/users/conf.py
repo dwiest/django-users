@@ -121,11 +121,9 @@ class UsersAppConf(AppConf):
   MFA_ISSUER_NAME = None
   MFA_ACCEPT_ANY_VALUE = False
   MFA_FIELD_CLASS = 'mfa'
-  MFA_FIELD_MAX_LENGTH = 6
-  MFA_FIELD_MIN_LENGTH = 6
   MFA_TOKEN_FIELD_LABEL = 'Token'
-  MFA_SECRET_KEY_MAX_LENGTH = 32
-  MFA_SECRET_KEY_MIN_LENGTH = 32
+  MFA_TOKEN_LENGTH = 6
+  MFA_SECRET_KEY_LENGTH = 32
   MFA_PASSWORD_FIELD_LABEL = 'Password'
   MFA_PASSWORD_CLASS = 'password'
   MFA_PASSWORD_INVALID_ERROR = 'The password you entered is incorrect.'
@@ -140,6 +138,11 @@ class UsersAppConf(AppConf):
   MFA_QRCODE_ERROR_CORRECTION = qrcode.constants.ERROR_CORRECT_H
   MFA_QRCODE_BOX_SIZE = 5
   MFA_QRCODE_BORDER = 4
+  MFA_STATUS_TEMPLATE = 'dwiest-django-users/mfa/index.html'
+  MFA_ENABLE_TEMPLATE = 'dwiest-django-users/mfa/enable.html'
+  MFA_ENABLE_SUCCESS_TEMPLATE = 'dwiest-django-users/mfa/enable_success.html'
+  MFA_DISABLE_TEMPLATE = 'dwiest-django-users/mfa/disable.html'
+  MFA_DISABLE_SUCCESS_TEMPLATE = 'dwiest-django-users/mfa/disable_success.html'
 
   '''
     Password reset settings
