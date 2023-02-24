@@ -22,8 +22,8 @@ class AuthenticationForm(forms.AuthenticationForm):
 
   mfa_token = CharField(
     label=_(settings.USERS_LOGIN_MFA_FIELD_LABEL),
-    max_length=settings.USERS_MFA_FIELD_MAX_LENGTH,
-    min_length=settings.USERS_MFA_FIELD_MIN_LENGTH,
+    max_length=settings.USERS_MFA_TOKEN_LENGTH,
+    min_length=settings.USERS_MFA_TOKEN_LENGTH,
     required=False,
     widget=NonstickyTextInput(
       attrs={
