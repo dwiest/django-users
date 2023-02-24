@@ -31,8 +31,8 @@ class MfaEnableForm(forms.Form):
   token = forms.CharField(
     label=settings.USERS_MFA_TOKEN_FIELD_LABEL,
     initial='',
-    max_length=settings.USERS_MFA_FIELD_MAX_LENGTH,
-    min_length=settings.USERS_MFA_FIELD_MIN_LENGTH,
+    max_length=settings.USERS_MFA_TOKEN_LENGTH,
+    min_length=settings.USERS_MFA_TOKEN_LENGTH,
     required=True,
     widget=NonstickyTextInput(
       attrs={
@@ -44,8 +44,8 @@ class MfaEnableForm(forms.Form):
 
   secret_key = forms.CharField(
     initial='',
-    max_length=settings.USERS_MFA_SECRET_KEY_MAX_LENGTH,
-    min_length=settings.USERS_MFA_SECRET_KEY_MIN_LENGTH,
+    max_length=settings.USERS_MFA_SECRET_KEY_LENGTH,
+    min_length=settings.USERS_MFA_SECRET_KEY_LENGTH,
     required=True,
     widget=forms.HiddenInput())
 
