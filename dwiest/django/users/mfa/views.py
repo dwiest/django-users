@@ -9,6 +9,7 @@ from enum import Enum
 from .forms import MfaEnableForm, MfaDisableForm
 from .models import MfaModel
 from .signals import mfa_disabled, mfa_enabled
+from ..conf import settings
 
 def check_user_mfa(sender, user, request, **kwargs):
   try:
