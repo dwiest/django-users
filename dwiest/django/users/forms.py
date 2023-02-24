@@ -400,8 +400,8 @@ class PasswordResetConfirmForm(authForms.PasswordChangeForm):
 
   mfa_token = forms.CharField(
     label=_(settings.USERS_PASSWORD_RESET_MFA_TOKEN_LABEL),
-    max_length=settings.USERS_MFA_FIELD_MAX_LENGTH,
-    min_length=settings.USERS_MFA_FIELD_MIN_LENGTH,
+    max_length=settings.USERS_MFA_TOKEN_LENGTH,
+    min_length=settings.USERS_MFA_TOKEN_LENGTH,
     required=False,
     widget=NonstickyTextInput(attrs={'size': 6}))
 
@@ -533,8 +533,8 @@ class PasswordChangeForm(authForms.PasswordChangeForm):
 
   mfa_token = forms.CharField(
     label=_(settings.USERS_PASSWORD_CHANGE_MFA_TOKEN_FIELD_LABEL),
-    max_length=settings.USERS_MFA_FIELD_MAX_LENGTH,
-    min_length=settings.USERS_MFA_FIELD_MIN_LENGTH,
+    max_length=settings.USERS_MFA_TOKEN_LENGTH,
+    min_length=settings.USERS_MFA_TOKEN_LENGTH,
     required=False,
     widget=NonstickyTextInput(attrs={'size': 6}))
 
