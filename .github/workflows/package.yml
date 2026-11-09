@@ -1,0 +1,43 @@
+name: Build and verify package
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        django: ['3.2', '4.2']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install build tools
+        run: python -m pip install build twine
+      - name: Build sdist and wheel
+        # The default build creates the wheel from the sdist, checking both paths.
+        run: python -m build
+      - name: Check package metadata
+        run: python -m twine check dist/*
+      - name: Install wheel in a clean environment
+        # qrcode is an existing undeclared dependency imported by users/conf.py.
+        run: |
+          python -m venv "$RUNNER_TEMP/package-venv"
+          "$RUNNER_TEMP/package-venv/bin/python" -m pip install "Django~=${{ matrix.django }}.0" qrcode dist/*.whl
+      - name: Verify installed tags and account templates
+        run: '"$RUNNER_TEMP/package-venv/bin/python" -I tests/check_installed_package.py'
+      - name: Upload distributions
+        uses: actions/upload-artifact@v4
+        with:
+          name: django-users-django-${{ matrix.django }}
+          path: dist/*
+          if-no-files-found: error
